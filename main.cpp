@@ -34,9 +34,11 @@ class Menu
 int main()
 {
     Menu Mainmenu;
-    Mainmenu.Draw();
+    
     
     while (1) {
+        Mainmenu.Draw();
+
         LCD.Update();
         // Never end
     }
