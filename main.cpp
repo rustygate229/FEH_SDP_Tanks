@@ -10,7 +10,7 @@ class Button{
     public:
         Button(int, int, int, int, char [10]); // constuctor
         void Draw();
-        int Action();
+        int Return();
         
     public:
         //Properties
@@ -32,47 +32,85 @@ class Menu
         Button credits = Button(50, 100, 100, 20, "Credits");
         Button playButton = Button(50, 60, 60, 20, "Play");
         Button howTo = Button(50, 80, 100, 20, "How To");
-        Button quit = Button(50, 120, 100, 20, "Quit");
+        Button stats = Button(50, 120, 140, 20, "Statistics");
 
         int ButtonCount;
 };
 
 int main()
 {
-    // 0: Menu, 1: Play, 2: How To, 3: Credits, 4: Quit
+    // 0: Menu, 1: Play, 2: How To, 3: Credits, 4: Stats
     int gameState = 0;
 
-    int gameOn = 1;
+    //variables to display text once
+    int once = 1;
 
     Menu Mainmenu;
+    Button Return(200, 200, 85, 20, "Return");
     
-    while (gameOn) {
+    while (1) {
+        // clears the previous frame
+        LCD.Clear();
         
         switch (gameState)
         {
             case 0:
                 Mainmenu.Draw();
                 gameState = Mainmenu.Action();
+                break;
 
-                if (gameState != 0)
+            case 1:
+                LCD.WriteAt("Play Game Here", 10, 10);
+                
+                if(Return.Return())
                 {
-                    LCD.Clear();
+                    gameState = 0;
                 }
 
                 break;
-            case 1:
-                LCD.WriteAt("Here should be the game", 10, 10);
-                break;
+
             case 2:
-                LCD.WriteAt("Here are the instructions", 10, 10);
+                LCD.WriteLine("Here are the instructions:");
+                LCD.WriteLine("There are 2 players, each with 100 hp");
+                LCD.WriteLine("Move the tank using the");
+                LCD.WriteLine("arrows");
+                LCD.WriteLine("Make a vector by clicking and dragging");
+                LCD.WriteLine("to shoot the projectile");
+                LCD.WriteLine("and release");
+                LCD.WriteLine("First to lose all hp loses");
+                
+                if(Return.Return())
+                {
+                    gameState = 0;
+                }
+                
                 break;
+
             case 3:
-                LCD.WriteAt("Game Made by Mayank and Jake", 10, 10);
+                LCD.WriteLine("Game made by Mayank");
+                LCD.WriteLine("Karnati and Jake Browning");
+                
+                if(Return.Return())
+                {
+                    gameState = 0;
+                }
+                
+                break;
+
             case 4:
-                gameOn = 0;
+                LCD.WriteLine("Game Statistics: \n");
+                LCD.WriteLine("Time: ");
+                LCD.WriteLine("Winner: ");
+                LCD.WriteLine("Shots Fired: ");
+                LCD.WriteLine("Shots Hit: ");
+                
+                if(Return.Return())
+                {
+                    gameState = 0;
+                }
         }
 
-        LCD.Update();
+        LCD.Update(); //Draws the new frame
         // Never end
     }
     return 0;
@@ -96,6 +134,27 @@ void Button::Draw()
     LCD.WriteAt(text, x+w/10, y+h/10);
 }
 
+//Return Button
+//returns 1 if the return button is clicked, else 0
+//only use this method for the return button
+int Button::Return()
+{
+    int touch_x, touch_y;
+
+    LCD.DrawRectangle(x, y, w, h);
+    LCD.WriteAt(text, x+w/10, y+h/10);
+
+    if (LCD.Touch(&touch_x, &touch_y))
+    {
+        if (touchInBox(touch_x, touch_y, x, y, w, h))
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
 //Menu Methods
 
 Menu::Menu() //constructor
@@ -111,7 +170,7 @@ void Menu::Draw()
     credits.Draw();
     playButton.Draw();
     howTo.Draw();
-    quit.Draw();
+    stats.Draw();
 }
 
 //Menu Action
@@ -132,7 +191,7 @@ int Menu::Action()
         {
             return 3;
         }
-        if (touchInBox(x, y, quit.x, quit.y, quit.w, quit.h))
+        if (touchInBox(x, y, stats.x, stats.y, stats.w, stats.h))
         {
             return 4;
         }
