@@ -14,14 +14,15 @@ bool touchInBox(int, int, int, int, int, int);
 class Tank{
     public:
         //Constructor
-        Tank(int, int, unsigned int);
+        Tank(float, float, unsigned int);
         Tank();
-        void getLocation(int *, int *); //returns tanks location
+        void getLocation(float *, float *); //returns tanks location
         void getAngle(float *, float *); //returns components of angle
         void Draw(); // Draw the tank
+        void Move(float, float); //Moves the tank
     private:
-        int xPos; // x position
-        int yPos; // y position
+        float xPos; // x position
+        float yPos; // y position
         int width; // width of tank hitbox
         int hieght; // hieght of tank hitbox
         float xAngle; //angle x component
@@ -164,7 +165,7 @@ int main()
 Tank::Tank(){}
 
 //Tank Constructor - with parameters
-Tank::Tank(int x, int y, unsigned int c = RED){
+Tank::Tank(float x, float y, unsigned int c = RED){
     //Copy variables into object
     color = c; //Tank Color
     //x and y positiion
@@ -173,12 +174,19 @@ Tank::Tank(int x, int y, unsigned int c = RED){
     width = 10; // width of tank hitbox
     hieght = 10; // hieght of tank hitbox
 }
+
 //Draw
 void Tank::Draw(){
     LCD.SetFontColor(color);
     LCD.DrawRectangle(xPos,yPos, width, hieght);
 }
 
+//Move
+void Tank::Move(float dx, float dy){
+    //Add change in position to current position
+    xPos += dx; //x position
+    yPos += dy; //y position
+}
 
 //Terrain Methods ------------------------
 
@@ -207,7 +215,6 @@ GameController::GameController(int terrainType = 0, int playerCount = 0){
     //Create Tanks
     myTank1 = Tank(50,200-10, BLUE);
     myTank2 = Tank(200,200-10, RED);
-
 }
 //Draw Function
 void GameController::Draw(){
