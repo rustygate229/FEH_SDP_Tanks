@@ -5,9 +5,50 @@
 
 
 
+
 // Function Prototypes
 bool touchInBox(int, int, int, int, int, int);
 
+
+//Tank Class Definition
+class Tank{
+    public:
+        //Constructor
+        Tank(int, int, unsigned int);
+        Tank();
+        void getLocation(int *, int *); //returns tanks location
+        void getAngle(float *, float *); //returns components of angle
+        void Draw(); // Draw the tank
+    private:
+        int xPos; // x position
+        int yPos; // y position
+        int width; // width of tank hitbox
+        int hieght; // hieght of tank hitbox
+        float xAngle; //angle x component
+        float yAngle; //angle y component
+        unsigned int color; //tank color
+};
+
+//Terrain Class Definition
+class Terrain{
+    public:
+        void Draw(); //Draw function
+        Terrain(int); //Flat terrain Constructor
+    private:
+        int height;
+        int terrainType;
+};
+
+//GameController Class Definition
+class GameController{
+    public:
+        void Draw(); //Draw function
+        GameController(int, int); //Constructor 
+    private:
+        Terrain myTerrain; //Terrain object
+        Tank myTank1; //Tank 1 object
+        Tank myTank2; //Tank 2 object
+};
 
 //Button Class Definition
 class Button{
@@ -15,7 +56,6 @@ class Button{
         Button(int, int, int, int, char [10]); // constuctor
         void Draw();
         int Return();
-        
     public:
         //Properties
         int x; // x position
@@ -25,6 +65,7 @@ class Button{
         char text[10];
 };
 
+//Menu Class Definition
 class Menu
 {
     public:
@@ -38,16 +79,18 @@ class Menu
         Button credits = Button(110, 160, 100, 25, "Credits");
         Button stats = Button(90, 210, 140, 25, "Statistics");
 
-        int ButtonCount;
+        int ButtonCount; // Stores the number of buttons
 };
+
+
+//Main ------------------------
 
 int main()
 {
     // 0: Menu, 1: Play, 2: How To, 3: Credits, 4: Stats
-    int gameState = 0;
-
-    //variables to display text once
-    int once = 1;
+    int menuState = 0;
+    int gameOngoing = 0;
+    GameController myController(0,2);
 
     Menu Mainmenu;
     Button Return(200, 200, 85, 20, "Return");
@@ -56,23 +99,19 @@ int main()
         // clears the previous frame
         LCD.Clear();
         
-        switch (gameState)
+        switch (menuState)
         {
             case 0:
                 Mainmenu.Draw();
-                gameState = Mainmenu.Action();
+                menuState = Mainmenu.Action();
                 break;
 
             case 1:
-                LCD.WriteAt("Play Game Here", 10, 10);
-                
-                if(Return.Return())
-                {
-                    gameState = 0;
-                }
+                //Draw Controller
+                myController.Draw();
+
 
                 break;
-
             case 2:
                 LCD.WriteLine("Here are the instructions:");
                 LCD.WriteLine("There are 2 players, each with 100 hp");
@@ -85,7 +124,7 @@ int main()
                 
                 if(Return.Return())
                 {
-                    gameState = 0;
+                    menuState = 0;
                 }
                 
                 break;
@@ -96,7 +135,7 @@ int main()
                 
                 if(Return.Return())
                 {
-                    gameState = 0;
+                    menuState = 0;
                 }
                 
                 break;
@@ -110,7 +149,7 @@ int main()
                 
                 if(Return.Return())
                 {
-                    gameState = 0;
+                    menuState = 0;
                 }
         }
 
@@ -119,6 +158,67 @@ int main()
     }
     return 0;
 }
+
+//Tank Methods ------------------------
+//Default Tank constructor
+Tank::Tank(){}
+
+//Tank Constructor - with parameters
+Tank::Tank(int x, int y, unsigned int c = RED){
+    //Copy variables into object
+    color = c; //Tank Color
+    //x and y positiion
+    xPos = x;
+    yPos = y;
+    width = 10; // width of tank hitbox
+    hieght = 10; // hieght of tank hitbox
+}
+//Draw
+void Tank::Draw(){
+    LCD.SetFontColor(color);
+    LCD.DrawRectangle(xPos,yPos, width, hieght);
+}
+
+
+//Terrain Methods ------------------------
+
+//Terrain Constructor
+Terrain::Terrain(int h = 200){
+    //Copy height value
+    height = h;
+    //set terrain type to default (0)
+    terrainType = 0;
+}
+
+//Draw Method
+void Terrain::Draw(){
+    //Create white line
+    LCD.SetFontColor(WHITE);
+    LCD.DrawHorizontalLine(height,0,360); //Draw ground line
+}
+
+//GameController Methods ------------------------
+
+//GameController Constructor
+GameController::GameController(int terrainType = 0, int playerCount = 0){
+    //Create Terrain and store it
+    myTerrain = Terrain(200);
+
+    //Create Tanks
+    myTank1 = Tank(50,200-10, BLUE);
+    myTank2 = Tank(200,200-10, RED);
+
+}
+//Draw Function
+void GameController::Draw(){
+    //Draw Terrain
+    myTerrain.Draw();
+    //Draw Tanks
+    myTank1.Draw();
+    myTank2.Draw();
+}
+
+//Button Methods ------------------------
 
 //Button Constructor
 Button::Button(int ix, int iy, int iw, int ih, char itext[10])
@@ -161,7 +261,7 @@ int Button::Return()
     return 0;
 }
 
-//Menu Methods
+//Menu Methods ------------------------
 
 Menu::Menu() //constructor
 {
@@ -185,6 +285,7 @@ int Menu::Action()
     int x, y;
     if (LCD.Touch(&x, &y))
     {
+        //While (!lcd.touch();) - Button release code
         if (touchInBox(x, y, playButton.x, playButton.y, playButton.w, playButton.h))
         {
             return 1;

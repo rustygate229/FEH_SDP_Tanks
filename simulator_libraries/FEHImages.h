@@ -3,6 +3,9 @@
 #include <fstream>
 #include <iostream>
 
+#ifndef FEHIMAGES_H
+#define FEHIMAGES_H
+
 class FEHImage
 {
 	public:
@@ -14,3 +17,5 @@ class FEHImage
 		int rows,cols;
 		int *saved_image;
 };
+
+#endif
