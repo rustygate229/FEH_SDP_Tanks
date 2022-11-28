@@ -248,7 +248,7 @@ void GameController::Draw(){
 
 //Touch Function - Jake
 void GameController::Touch(int mx, int my){
-    myTank1.Move(mx - myTank1.xPos - myTank1.width/2, my - myTank1.yPos - myTank1.height/2); //Test code
+    myTank1.Move(mx - myTank1.xPos - myTank1.width/2, my - myTank1.yPos - myTank1.height/2); //TEST CODE
 
 }
 //Button Methods ------------------------
