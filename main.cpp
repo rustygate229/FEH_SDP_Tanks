@@ -10,7 +10,7 @@
 bool touchInBox(int, int, int, int, int, int);
 
 
-//Tank Class Definition
+//Tank Class Definition - Jake
 class Tank{
     public:
         //Constructor
@@ -20,17 +20,19 @@ class Tank{
         void getAngle(float *, float *); //returns components of angle
         void Draw(); // Draw the tank
         void Move(float, float); //Moves the tank
-    private:
-        float xPos; // x position
+        //Out of private for testing purposes: - TEST CODE
+        float xPos; // x position 
         float yPos; // y position
         int width; // width of tank hitbox
-        int hieght; // hieght of tank hitbox
+        int height; // hieght of tank hitbox
+    private:
+        /*Return xPos, yPos, width, hieght to here*/
         float xAngle; //angle x component
         float yAngle; //angle y component
         unsigned int color; //tank color
 };
 
-//Terrain Class Definition
+//Terrain Class Definition - Jake
 class Terrain{
     public:
         void Draw(); //Draw function
@@ -40,18 +42,19 @@ class Terrain{
         int terrainType;
 };
 
-//GameController Class Definition
+//GameController Class Definition - Jake
 class GameController{
     public:
         void Draw(); //Draw function
         GameController(int, int); //Constructor 
+        void Touch(int, int); //Input handling
     private:
         Terrain myTerrain; //Terrain object
         Tank myTank1; //Tank 1 object
         Tank myTank2; //Tank 2 object
 };
 
-//Button Class Definition
+//Button Class Definition - Jake
 class Button{
     public:
         Button(int, int, int, int, char [10]); // constuctor
@@ -66,7 +69,7 @@ class Button{
         char text[10];
 };
 
-//Menu Class Definition
+//Menu Class Definition - Mayank
 class Menu
 {
     public:
@@ -90,16 +93,26 @@ int main()
 {
     // 0: Menu, 1: Play, 2: How To, 3: Credits, 4: Stats
     int menuState = 0;
+    //Game state variable
     int gameOngoing = 0;
+
+    //Mouse x and y variables
+    int mx = 0, my = 0;
+    
+    //Main game controller object
     GameController myController(0,2);
 
-    Menu Mainmenu;
+    //Menu objects
+    Menu Mainmenu; //Main menu object
     Button Return(200, 200, 85, 20, "Return");
     
+
+
     while (1) {
         // clears the previous frame
         LCD.Clear();
         
+        //Go to apropriate window - Mayank
         switch (menuState)
         {
             case 0:
@@ -108,10 +121,15 @@ int main()
                 break;
 
             case 1:
-                //Draw Controller
+                //Draw controller - J
                 myController.Draw();
-
-
+                //Wait for input - J
+                while(!LCD.Touch(&mx,&my));
+                //Handle input - J
+                while(LCD.Touch(&mx, &my)){
+                    myController.Touch(mx,my);
+                    myController.Draw();
+                }
                 break;
             case 2:
                 LCD.WriteLine("Here are the instructions:");
@@ -161,10 +179,10 @@ int main()
 }
 
 //Tank Methods ------------------------
-//Default Tank constructor
+//Default Tank constructor - Jake
 Tank::Tank(){}
 
-//Tank Constructor - with parameters
+//Tank Constructor - with parameters - Jake
 Tank::Tank(float x, float y, unsigned int c = RED){
     //Copy variables into object
     color = c; //Tank Color
@@ -172,16 +190,17 @@ Tank::Tank(float x, float y, unsigned int c = RED){
     xPos = x;
     yPos = y;
     width = 10; // width of tank hitbox
-    hieght = 10; // hieght of tank hitbox
+    height = 10; // hieght of tank hitbox
 }
 
-//Draw
+//Draw - Jake
 void Tank::Draw(){
+    //Draw rectangle using color, position, and dimensions stored in tank object
     LCD.SetFontColor(color);
-    LCD.DrawRectangle(xPos,yPos, width, hieght);
+    LCD.DrawRectangle(xPos,yPos, width, height);
 }
 
-//Move
+//Move - Jake
 void Tank::Move(float dx, float dy){
     //Add change in position to current position
     xPos += dx; //x position
@@ -190,7 +209,7 @@ void Tank::Move(float dx, float dy){
 
 //Terrain Methods ------------------------
 
-//Terrain Constructor
+//Terrain Constructor - Jake
 Terrain::Terrain(int h = 200){
     //Copy height value
     height = h;
@@ -198,7 +217,7 @@ Terrain::Terrain(int h = 200){
     terrainType = 0;
 }
 
-//Draw Method
+//Draw Method - Jake
 void Terrain::Draw(){
     //Create white line
     LCD.SetFontColor(WHITE);
@@ -207,7 +226,7 @@ void Terrain::Draw(){
 
 //GameController Methods ------------------------
 
-//GameController Constructor
+//GameController Constructor - Jake
 GameController::GameController(int terrainType = 0, int playerCount = 0){
     //Create Terrain and store it
     myTerrain = Terrain(200);
@@ -216,8 +235,10 @@ GameController::GameController(int terrainType = 0, int playerCount = 0){
     myTank1 = Tank(50,200-10, BLUE);
     myTank2 = Tank(200,200-10, RED);
 }
-//Draw Function
+//Draw Function - Jake
 void GameController::Draw(){
+    // clears the previous frame
+    LCD.Clear();
     //Draw Terrain
     myTerrain.Draw();
     //Draw Tanks
@@ -225,9 +246,14 @@ void GameController::Draw(){
     myTank2.Draw();
 }
 
+//Touch Function - Jake
+void GameController::Touch(int mx, int my){
+    myTank1.Move(mx - myTank1.xPos - myTank1.width/2, my - myTank1.yPos - myTank1.height/2); //Test code
+
+}
 //Button Methods ------------------------
 
-//Button Constructor
+//Button Constructor - Mayank
 Button::Button(int ix, int iy, int iw, int ih, char itext[10])
 {
     //Copy variables in
@@ -238,7 +264,7 @@ Button::Button(int ix, int iy, int iw, int ih, char itext[10])
     strcpy(text,itext);
 }
 
-//Draw Button
+//Draw Button - Mayanl
 void Button::Draw()
 {
     LCD.SetFontColor(RED);
@@ -247,7 +273,7 @@ void Button::Draw()
     LCD.WriteAt(text, x+w/10, y+h/5);
 }
 
-//Return Button
+//Return Button - Mayank
 //returns 1 if the return button is clicked, else 0
 //only use this method for the return button
 int Button::Return()
@@ -270,12 +296,12 @@ int Button::Return()
 
 //Menu Methods ------------------------
 
-Menu::Menu() //constructor
+Menu::Menu() //constructor - Both?
 {
     ButtonCount = 0;
 }
 
-//Menu Draw
+//Menu Draw - Mayank
 void Menu::Draw()
 {
     LCD.WriteAt("Tanks 2.0", 90, 0);
@@ -286,7 +312,7 @@ void Menu::Draw()
     stats.Draw();
 }
 
-//Menu Action
+//Menu Action - Mayank
 int Menu::Action()
 {
     int x, y;
@@ -314,7 +340,7 @@ int Menu::Action()
 }
 
 
-// Generic Functions
+// Generic Functions - Mayank
 bool touchInBox(int x, int y, int box_x, int box_y, int box_w, int box_h)
 {
     if (x > box_x && x < (box_x + box_w))
