@@ -33,10 +33,10 @@ class Menu
         int Action();
 
     private:
-        Button credits = Button(50, 100, 100, 20, "Credits");
-        Button playButton = Button(50, 60, 60, 20, "Play");
-        Button howTo = Button(50, 80, 100, 20, "How To");
-        Button stats = Button(50, 120, 140, 20, "Statistics");
+        Button playButton = Button(125, 60, 60, 25, "Play");
+        Button howTo = Button(115, 110, 90, 25, "How To");
+        Button credits = Button(110, 160, 100, 25, "Credits");
+        Button stats = Button(90, 210, 140, 25, "Statistics");
 
         int ButtonCount;
 };
@@ -134,8 +134,10 @@ Button::Button(int ix, int iy, int iw, int ih, char itext[10])
 //Draw Button
 void Button::Draw()
 {
+    LCD.SetFontColor(RED);
     LCD.DrawRectangle(x, y, w, h);
-    LCD.WriteAt(text, x+w/10, y+h/10);
+    LCD.SetFontColor(WHITE);
+    LCD.WriteAt(text, x+w/10, y+h/5);
 }
 
 //Return Button
@@ -169,7 +171,7 @@ Menu::Menu() //constructor
 //Menu Draw
 void Menu::Draw()
 {
-    LCD.WriteAt("Tanks 2.0", 50, 20);
+    LCD.WriteAt("Tanks 2.0", 90, 0);
 
     credits.Draw();
     playButton.Draw();
