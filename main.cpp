@@ -104,7 +104,7 @@ int main()
 
     //Menu objects
     Menu Mainmenu; //Main menu object
-    Button Return(200, 200, 85, 20, "Return");
+    Button Return(230, 200, 60, 20, "Back"); // Back button to return to screen
     
 
 
@@ -264,7 +264,7 @@ Button::Button(int ix, int iy, int iw, int ih, char itext[10])
     strcpy(text,itext);
 }
 
-//Draw Button - Mayanl
+//Draw Button - Mayank
 void Button::Draw()
 {
     LCD.SetFontColor(RED);
@@ -316,25 +316,29 @@ void Menu::Draw()
 int Menu::Action()
 {
     int x, y;
-    if (LCD.Touch(&x, &y))
+
+    //Wait for touchscreen press
+    while(!LCD.Touch(&x, &y));
+
+    //Wait for touchscreen release
+    while(LCD.Touch(&x, &y));
+
+    //While (!lcd.touch();) - Button release code
+    if (touchInBox(x, y, playButton.x, playButton.y, playButton.w, playButton.h))
     {
-        //While (!lcd.touch();) - Button release code
-        if (touchInBox(x, y, playButton.x, playButton.y, playButton.w, playButton.h))
-        {
-            return 1;
-        }
-        if (touchInBox(x, y, howTo.x, howTo.y, howTo.w, howTo.h))
-        {
-            return 2;
-        }
-        if (touchInBox(x, y, credits.x, credits.y, credits.w, credits.h))
-        {
-            return 3;
-        }
-        if (touchInBox(x, y, stats.x, stats.y, stats.w, stats.h))
-        {
-            return 4;
-        }
+        return 1;
+    }
+    if (touchInBox(x, y, howTo.x, howTo.y, howTo.w, howTo.h))
+    {
+        return 2;
+    }
+    if (touchInBox(x, y, credits.x, credits.y, credits.w, credits.h))
+    {
+        return 3;
+    }
+    if (touchInBox(x, y, stats.x, stats.y, stats.w, stats.h))
+    {
+        return 4;
     }
     
 }
