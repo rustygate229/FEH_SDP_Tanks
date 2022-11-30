@@ -66,16 +66,17 @@ class Tank{
         void Draw(); // Draw the tank
         void Move(float, float); //Moves the tank
         void Aim(float, float); //Aims the tank 
+        void Fire(); //Fires a shot
         //Out of private for testing purposes: - TEST CODE
         float turretX = 10; //turret x position relative to the x position
-        float turretY = 10; //turret y position relative to the y position
-        float turretR = 2; //turret radius
+        float turretY = 8; //turret y position relative to the y position
+        float turretR = 1; //turret radius
         float turretL = 20; //turret length
         float xPos; // x position 
         float yPos; // y position
         int width; // width of tank hitbox
         int height; // hieght of tank hitbox
-    private:
+    //private:
         /*Return xPos, yPos, width, hieght to here*/
         float xComponent = 1; //angle x component
         float yComponent = -1; //angle y component
@@ -100,10 +101,13 @@ class GameController{
         bool detectHit(); //Checks for projectile hit
         //void checkEnd(); //Checks for game end
         void Touch(int, int); //Input handling
+        void Fire(); // Fires a shot
         int ReadyToFire; //Ready to Fire Flag
         int Turn; //Stores which player is to-move: 1 -> player 1, 2 -> player 2
+        int Aiming; // Stores a player is aiming
         void DisplayStats(); // Displays Stats
         void calcShot();
+        int Fired;
     private:
         Terrain myTerrain; //Terrain object
         Tank myTank1; //Tank 1 object
@@ -189,19 +193,27 @@ int main()
                     myController.Touch(mx,my);
                     myController.Draw();
                 }
+                myController.Fire();
+                while (true){
+                    myController.calcShot();
+                    myController.Draw();
+                }
+                /*
                 //Test if shot was lined up and fire if so
                 if(myController.ReadyToFire == 1){
-                    /*while (myController.Fired == 1){
+                    myController.Fire();
+                    while (myController.Fired == 1){
                         myController.calcShot();
-                        myController.Draw();}
+                        myController.Draw();
+                        }
                     if(myController.detectHit()==1){
                         if(myController.checkEnd()==1){
                             gameOngoing = 0;
                         }
                     }
                     myController.takeTurn();
-                    */
-                }
+                    
+                }*/
                 break;
             case 2:
                 LCD.WriteLine("Here are the instructions:");
@@ -265,10 +277,12 @@ Tank::Tank(float x, float y, unsigned int c = RED){
 void Tank::Draw(){
     //Draw rectangle using color, position, and dimensions stored in tank object
     LCD.SetFontColor(color);
-    LCD.DrawRectangle(xPos,yPos, width, height);
-    LCD.DrawRectangle(xPos,yPos, width, height);
+    LCD.FillRectangle(xPos,yPos + height/2, width, height/2);
+    LCD.FillRectangle(xPos + width/4,yPos + width*1/4, width/2, height/3);
+    
     
     //Draw turret - Working  but gross. Just do circle line circle for the love of god
+    
     //Computation variables for sanity
     float a = xComponent;
     float b = yComponent;
@@ -279,7 +293,8 @@ void Tank::Draw(){
     float lx =  l*a/(sqrt(pow(a,2)+pow(b,2)));
     float ly = l*b/(sqrt(pow(a,2)+pow(b,2)));
     
-
+    //LCD.DrawLine(offX, offY, offX + lx, offY + ly);
+    
     //Handle near zero cases
     if ((a <= 15 && a >= -15 ) && b >= 0){
         LCD.DrawRectangle(offX-r,offY, 2*r, l);
@@ -313,6 +328,11 @@ void Tank::Aim(float xComp, float yComp){
     xComponent = xComp;
     yComponent = yComp;
 }
+//Fire - Jake
+void Tank::Fire(){
+    
+}
+
 //Move - Jake
 void Tank::Move(float dx, float dy){
     //Add change in position to current position
@@ -349,7 +369,9 @@ GameController::GameController(int terrainType = 0, int playerCount = 0){
     myTank2 = Tank(200,200-20, BLUE);
 
     //Default gamestate values
-    ReadyToFire == 0;
+    ReadyToFire = 0;
+    Turn = 1;
+    Aiming = 1;
 }
 //Draw Function - Jake
 void GameController::Draw(){
@@ -360,13 +382,71 @@ void GameController::Draw(){
     //Draw Tanks
     myTank1.Draw();
     myTank2.Draw();
+    bullet1.Draw();
+    if (Turn == 1){
+        //Show controls for player 1
+        LCD.SetFontColor(WHITE);
+        //Sides
+        LCD.DrawRectangle (myTank1.xPos + myTank1.width + 10, myTank1.yPos + myTank1.height/2 - 1, 2, 2 );
+        LCD.DrawRectangle (myTank1.xPos - 10, myTank1.yPos + myTank1.height/2 - 1, 2, 2 );
+        //Top
+        LCD.DrawRectangle (myTank1.xPos + myTank1.width/2 -1 , myTank1.yPos - 10, 2, 2 );
+    }
+    if (Turn == 2){
+        //Show controls for player 2
+        LCD.SetFontColor(WHITE);
+        //Sides
+        LCD.DrawRectangle (myTank2.xPos + myTank2.width + 10, myTank2.yPos + myTank2.height/2 - 1, 2, 2 );
+        LCD.DrawRectangle (myTank2.xPos - 10, myTank2.yPos + myTank2.height/2 - 1, 2, 2 );
+        //Top
+        LCD.DrawRectangle (myTank2.xPos + myTank2.width/2 -1 , myTank2.yPos - 10, 2, 2 );
+    }
+
+    //Update Screen
+    LCD.Update();
 }
 
 //Touch Function - Jake
 void GameController::Touch(int mx, int my){
-    myTank1.Aim(mx - myTank1.xPos, my - myTank1.yPos); //TEST CODE
-    myTank2.Aim(mx - myTank2.xPos, my - myTank2.yPos); //TEST CODE
+    
+    //Start Aiming
+    if(Aiming == 0){
+        //Update Statuses
+        Aiming == 1;
+        ReadyToFire == 1;
+    }
+    else{
+        //Aim correct tank towards mouse
+        if (Turn == 1){
+            myTank1.Aim(mx - myTank1.xPos, my - myTank1.yPos);
+        }
+        if (Turn == 2){
+            myTank2.Aim(mx - myTank2.xPos, my - myTank2.yPos); //TEST CODE
+        }
+    }
+}
 
+//Fire Function - Jake
+void GameController::Fire(){
+    //update Status
+    Aiming = 0;
+    Fired = 1;
+    ReadyToFire = 0;
+    
+    //Fire shot from correct tank
+    if (Turn == 1){
+        bullet1.Fire(myTank1.xPos, myTank1.yPos, 0.01*(myTank1.xComponent), 0.01*(myTank1.yComponent));
+    }
+    if (Turn == 2){
+        bullet2.Fire(myTank2.xPos, myTank2.yPos, 0.01*(myTank2.xComponent), 0.01*(myTank2.yComponent));
+    }
+}
+
+//CalcShot Function - Jake
+
+void GameController::calcShot(){
+    //Calculate shot trajectory
+    bullet1.calcShot();    
 }
 
 //Detect Hit Function - Mayank
@@ -552,7 +632,7 @@ Projectile::Projectile()
     py = 0;
     vx = 0;
     vy = 0;
-    ay = -2;
+    ay = +.01;
 }
 
 // Projectile Fire - Mayank
