@@ -24,6 +24,33 @@ MAYANK:
 
 */
 
+//Stats Struct
+struct Statistics
+{
+    int tank1_shots_fired = 0;
+    int tank2_shots_fired = 0;
+    int tank1_shots_hit = 0;
+    int tank2_shots_hit = 0;
+    int tank1_wins = 0;
+    int tank2_wins = 0;
+};
+
+//Projectile Class Definition - Mayank
+class Projectile{
+    public:
+        Projectile();
+        void Fire(float, float, float, float);
+        void calcShot();
+        void Draw();
+
+    // private:
+        float px; // X position
+        float py; // Y position
+        float vx; // X velocity
+        float vy; // Y velocity
+        float ay; // Y acceleration
+};
+
 // Function Prototypes
 bool touchInBox(int, int, int, int, int, int);
 
@@ -60,7 +87,7 @@ class Terrain{
     public:
         void Draw(); //Draw function
         Terrain(int); //Flat terrain Constructor
-    private:
+    //private:
         int height;
         int terrainType;
 };
@@ -70,15 +97,20 @@ class GameController{
     public:
         void Draw(); //Draw function
         GameController(int, int); //Constructor 
-        //void dectectHit(); //Checks for projectile hit
+        bool detectHit(); //Checks for projectile hit
         //void checkEnd(); //Checks for game end
         void Touch(int, int); //Input handling
         int ReadyToFire; //Ready to Fire Flag
         int Turn; //Stores which player is to-move: 1 -> player 1, 2 -> player 2
+        void DisplayStats(); // Displays Stats
+        void calcShot();
     private:
         Terrain myTerrain; //Terrain object
         Tank myTank1; //Tank 1 object
         Tank myTank2; //Tank 2 object
+        Projectile bullet1; // Tank 1's projectile
+        Projectile bullet2; // Tank 2's projectile
+        struct Statistics gameStats;
 };
 
 //Button Class Definition - Jake
@@ -200,11 +232,7 @@ int main()
                 break;
 
             case 4:
-                LCD.WriteLine("Game Statistics: \n");
-                LCD.WriteLine("Time: ");
-                LCD.WriteLine("Winner: ");
-                LCD.WriteLine("Shots Fired: ");
-                LCD.WriteLine("Shots Hit: ");
+                myController.DisplayStats();
                 
                 if(Return.Return())
                 {
@@ -340,6 +368,74 @@ void GameController::Touch(int mx, int my){
     myTank2.Aim(mx - myTank2.xPos, my - myTank2.yPos); //TEST CODE
 
 }
+
+//Detect Hit Function - Mayank
+bool GameController::detectHit()
+{
+    // If the first player shoots
+    if (Turn == 1)
+    {   
+        //Distance formula between first bullet and second tank
+        if (sqrt(pow(bullet1.px - myTank2.xPos, 2) + pow(bullet1.py - myTank2.yPos, 2)) < 5)
+        {
+            return true; // returns true if hit
+         
+        // if bullet hits terrain instead
+        } else if (bullet1.py >= myTerrain.height) {
+            return false; // returns false for miss
+        } 
+
+    // If second player shoots
+    } else if (Turn == 2) {
+
+        //Distance formula between second bullet and first tank
+        if (sqrt(pow(bullet2.px - myTank1.xPos, 2) + pow(bullet2.py - myTank1.yPos, 2)) < 5)
+        {
+            return true; // returns true if hit
+
+        // if bullet hits terrain
+        } else if (bullet2.py >= myTerrain.height) {
+            return false; // returns false for miss
+        }
+    }
+}
+
+// Display Stats Method - Mayank
+void GameController::DisplayStats()
+{
+    LCD.WriteAt("Game Statistics:", 0, 0);
+
+    LCD.SetFontColor(RED);
+    LCD.WriteAt("Player 1", 0, 30);
+    LCD.SetFontColor(BLUE);
+    LCD.WriteAt("Player 2", 150, 30);
+
+    LCD.SetFontColor(WHITE);
+    LCD.WriteAt("Wins:", 0, 60);
+    LCD.SetFontColor(RED);
+    LCD.WriteAt(gameStats.tank1_wins, 70, 60);
+    LCD.SetFontColor(BLUE);
+    LCD.Write("");
+    LCD.WriteAt(gameStats.tank2_wins, 100, 60);
+
+    LCD.SetFontColor(WHITE);
+    LCD.WriteAt("Shots Fired:", 0, 75);
+    LCD.SetFontColor(RED);
+    LCD.WriteAt(gameStats.tank1_shots_fired, 150, 75);
+    LCD.SetFontColor(BLUE);
+    LCD.Write("");
+    LCD.WriteAt(gameStats.tank2_shots_fired, 180, 75);
+
+    LCD.SetFontColor(WHITE);
+    LCD.WriteAt("Shots Hit:", 0, 90);
+    LCD.SetFontColor(RED);
+    LCD.WriteAt(gameStats.tank1_shots_hit, 130, 90);
+    LCD.SetFontColor(BLUE);
+    LCD.Write("");
+    LCD.WriteAt(gameStats.tank1_shots_hit, 160, 90);
+
+    LCD.SetFontColor(WHITE);
+}
 //Button Methods ------------------------
 
 //Button Constructor - Mayank
@@ -445,4 +541,40 @@ bool touchInBox(int x, int y, int box_x, int box_y, int box_w, int box_h)
     }
 
     return false;
+}
+
+// Projectile Methods ------------------------------------
+
+// Projectile Constructor - Mayank
+Projectile::Projectile()
+{
+    px = 0;
+    py = 0;
+    vx = 0;
+    vy = 0;
+    ay = -2;
+}
+
+// Projectile Fire - Mayank
+void Projectile::Fire(float px0, float py0, float vx0, float vy0)
+{   
+    px = px0;
+    py = py0;
+    vx = vx0;
+    vy = vy0;
+}
+
+// Projectile Calc Shot - Mayank
+void Projectile::calcShot()
+{
+    px += vx;
+    py += vy;
+    vy += ay;
+}
+
+// Projectile Draw - Mayank
+void Projectile::Draw()
+{
+    LCD.SetFontColor(LCD.White);
+    LCD.FillCircle(px, py, 10);
 }
