@@ -4,11 +4,23 @@
 #include <iostream>
 
 
-
-
 // Function Prototypes
 bool touchInBox(int, int, int, int, int, int);
 
+//Projectile Class Definition - Mayank
+class Projectile{
+    public:
+        Projectile();
+        void Fire(float, float, float, float);
+        void calcShot();
+
+    private:
+        float px; // X position
+        float py; // Y position
+        float vx; // X velocity
+        float vy; // Y velocity
+        float ay; // Y acceleration
+};
 
 //Tank Class Definition - Jake
 class Tank{
@@ -27,8 +39,8 @@ class Tank{
         int height; // hieght of tank hitbox
     private:
         /*Return xPos, yPos, width, hieght to here*/
-        float xAngle; //angle x component
-        float yAngle; //angle y component
+        float xComponent; //angle x component
+        float yComponent; //angle y component
         unsigned int color; //tank color
 };
 
@@ -48,10 +60,13 @@ class GameController{
         void Draw(); //Draw function
         GameController(int, int); //Constructor 
         void Touch(int, int); //Input handling
+        void calcShot();
     private:
         Terrain myTerrain; //Terrain object
         Tank myTank1; //Tank 1 object
         Tank myTank2; //Tank 2 object
+        Projectile bullet1; // Tank 1's projectile
+        Projectile bullet2; // Tank 2's projectile
 };
 
 //Button Class Definition - Jake
@@ -343,6 +358,34 @@ int Menu::Action()
     
 }
 
+// Projectile Methods ------------------------------------
+
+// Projectile Constructor - Mayank
+Projectile::Projectile()
+{
+    px = 0;
+    py = 0;
+    vx = 0;
+    vy = 0;
+    ay = -2;
+}
+
+// Projectile Fire - Mayank
+void Projectile::Fire(float px0, float py0, float vx0, float vy0)
+{   
+    px = px0;
+    py = py0;
+    vx = vx0;
+    vy = vy0;
+}
+
+// Projectile Calc Shot - Mayank
+void Projectile::calcShot()
+{
+    px += vx;
+    py += vy;
+    vy += ay;
+}
 
 // Generic Functions - Mayank
 bool touchInBox(int x, int y, int box_x, int box_y, int box_w, int box_h)
