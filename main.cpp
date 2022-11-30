@@ -42,7 +42,7 @@ class Tank{
         //Out of private for testing purposes: - TEST CODE
         float turretX = 10; //turret x position relative to the x position
         float turretY = 10; //turret y position relative to the y position
-        float turretR = 5; //turret radius
+        float turretR = 2; //turret radius
         float turretL = 20; //turret length
         float xPos; // x position 
         float yPos; // y position
@@ -238,8 +238,8 @@ void Tank::Draw(){
     //Draw rectangle using color, position, and dimensions stored in tank object
     LCD.SetFontColor(color);
     LCD.DrawRectangle(xPos,yPos, width, height);
-
-    /*
+    LCD.DrawRectangle(xPos,yPos, width, height);
+    
     //Draw turret - Working  but gross. Just do circle line circle for the love of god
     //Computation variables for sanity
     float a = xComponent;
@@ -250,18 +250,19 @@ void Tank::Draw(){
     float offY = yPos + turretY;
     float lx =  l*a/(sqrt(pow(a,2)+pow(b,2)));
     float ly = l*b/(sqrt(pow(a,2)+pow(b,2)));
+    
 
     //Handle near zero cases
-    if ((a <= 6 && a >= -6 ) && b >= 0){
+    if ((a <= 15 && a >= -15 ) && b >= 0){
         LCD.DrawRectangle(offX-r,offY, 2*r, l);
     }
-    else if ((a <= 6 && a >= -6 ) && b < 0){
+    else if ((a <= 15 && a >= -15 ) && b < 0){
         LCD.DrawRectangle(offX-r,offY, 2*r, -l);
     }
-    else if ((b <= 6 && b >= -6 ) && a >= 0){
+    else if ((b <= 15 && b >= -15 ) && a >= 0){
         LCD.DrawRectangle(offX, offY-r, l, 2*r);
     }
-    else if ((b <= 6 && b >= -6 ) && a < 0){
+    else if ((b <= 15 && b >= -15 ) && a < 0){
         LCD.DrawRectangle(offX, offY-r, -l, 2*r);
     }
     else if (a == 0 && b == 0){
@@ -275,7 +276,7 @@ void Tank::Draw(){
         //Muzzle
         LCD.DrawLine(offX + r*a/abs(a)*cos(atan2(b,a)+ M_PI_2) + lx, offY + a*b/(abs(a*b))*r*sin((b/abs(b))*(atan2(b,a) + M_PI_2)) + ly, offX + r*a/abs(a)*cos(atan2(b,a)- M_PI_2) + lx, offY + a*b/(abs(a*b))*r*sin((b/abs(b))*(atan2(b,a) - M_PI_2)) + ly);
         LCD.DrawLine(offX + r*a/abs(a)*cos(atan2(b,a)+ M_PI_2), offY + a*b/(abs(a*b))*r*sin((b/abs(b))*(atan2(b,a) + M_PI_2)), offX + r*a/abs(a)*cos(atan2(b,a)- M_PI_2), offY + a*b/(abs(a*b))*r*sin((b/abs(b))*(atan2(b,a) - M_PI_2)));
-    }*/
+    }
 }
 
 //Aim - Jake
@@ -316,8 +317,8 @@ GameController::GameController(int terrainType = 0, int playerCount = 0){
     myTerrain = Terrain(200);
 
     //Create Tanks
-    myTank1 = Tank(50,200-20, BLUE);
-    myTank2 = Tank(200,200-20, RED);
+    myTank1 = Tank(50,200-20, RED);
+    myTank2 = Tank(200,200-20, BLUE);
 
     //Default gamestate values
     ReadyToFire == 0;
