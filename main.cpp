@@ -7,12 +7,12 @@
 //Stats Struct
 struct Statistics
 {
-    int tank1_shots_fired;
-    int tank2_shots_fired;
-    int tank1_shots_hit;
-    int tank2_shots_hit;
-    int tank1_wins;
-    int tank2_wins;
+    int tank1_shots_fired = 0;
+    int tank2_shots_fired = 0;
+    int tank1_shots_hit = 0;
+    int tank2_shots_hit = 0;
+    int tank1_wins = 0;
+    int tank2_wins = 0;
 };
 
 // Function Prototypes
@@ -191,11 +191,7 @@ int main()
                 break;
 
             case 4:
-                LCD.WriteLine("Game Statistics: \n");
-                LCD.WriteLine("Time: ");
-                LCD.WriteLine("Winner: ");
-                LCD.WriteLine("Shots Fired: ");
-                LCD.WriteLine("Shots Hit: ");
+                myController.DisplayStats();
                 
                 if(Return.Return())
                 {
@@ -317,7 +313,38 @@ bool GameController::detectHit()
 // Display Stats Method - Mayank
 void GameController::DisplayStats()
 {
-    //Code to Display Stats
+    LCD.WriteAt("Game Statistics:", 0, 0);
+
+    LCD.SetFontColor(RED);
+    LCD.WriteAt("Player 1", 0, 30);
+    LCD.SetFontColor(BLUE);
+    LCD.WriteAt("Player 2", 150, 30);
+
+    LCD.SetFontColor(WHITE);
+    LCD.WriteAt("Wins:", 0, 60);
+    LCD.SetFontColor(RED);
+    LCD.WriteAt(gameStats.tank1_wins, 70, 60);
+    LCD.SetFontColor(BLUE);
+    LCD.Write("");
+    LCD.WriteAt(gameStats.tank2_wins, 100, 60);
+
+    LCD.SetFontColor(WHITE);
+    LCD.WriteAt("Shots Fired:", 0, 75);
+    LCD.SetFontColor(RED);
+    LCD.WriteAt(gameStats.tank1_shots_fired, 150, 75);
+    LCD.SetFontColor(BLUE);
+    LCD.Write("");
+    LCD.WriteAt(gameStats.tank2_shots_fired, 180, 75);
+
+    LCD.SetFontColor(WHITE);
+    LCD.WriteAt("Shots Hit:", 0, 90);
+    LCD.SetFontColor(RED);
+    LCD.WriteAt(gameStats.tank1_shots_hit, 130, 90);
+    LCD.SetFontColor(BLUE);
+    LCD.Write("");
+    LCD.WriteAt(gameStats.tank1_shots_hit, 160, 90);
+
+    LCD.SetFontColor(WHITE);
 }
 
 //Button Methods ------------------------
