@@ -2,7 +2,18 @@
 
 #include "FEHLCD.h"
 #include <iostream>
+#include <math.h>
 
+//Stats Struct
+struct Statistics
+{
+    int tank1_shots_fired;
+    int tank2_shots_fired;
+    int tank1_shots_hit;
+    int tank2_shots_hit;
+    int tank1_wins;
+    int tank2_wins;
+};
 
 // Function Prototypes
 bool touchInBox(int, int, int, int, int, int);
@@ -13,8 +24,9 @@ class Projectile{
         Projectile();
         void Fire(float, float, float, float);
         void calcShot();
+        void Draw();
 
-    private:
+    // private:
         float px; // X position
         float py; // Y position
         float vx; // X velocity
@@ -49,7 +61,7 @@ class Terrain{
     public:
         void Draw(); //Draw function
         Terrain(int); //Flat terrain Constructor
-    private:
+    // private:
         int height;
         int terrainType;
 };
@@ -61,12 +73,16 @@ class GameController{
         GameController(int, int); //Constructor 
         void Touch(int, int); //Input handling
         void calcShot();
+        bool detectHit();
+        int Turn; //Stores which player is to-move: 1 -> player 1, 2 -> player 2
+        void DisplayStats(); // Displays Stats
     private:
         Terrain myTerrain; //Terrain object
         Tank myTank1; //Tank 1 object
         Tank myTank2; //Tank 2 object
         Projectile bullet1; // Tank 1's projectile
         Projectile bullet2; // Tank 2's projectile
+        struct Statistics gameStats;
 };
 
 //Button Class Definition - Jake
@@ -266,6 +282,44 @@ void GameController::Touch(int mx, int my){
     myTank1.Move(mx - myTank1.xPos - myTank1.width/2, 0); //TEST CODE
 
 }
+
+//Detect Hit Function - Mayank
+bool GameController::detectHit()
+{
+    // If the first player shoots
+    if (Turn == 1)
+    {   
+        //Distance formula between first bullet and second tank
+        if (sqrt(pow(bullet1.px - myTank2.xPos, 2) + pow(bullet1.py - myTank2.yPos, 2)) < 5)
+        {
+            return true; // returns true if hit
+         
+        // if bullet hits terrain instead
+        } else if (bullet1.py >= myTerrain.height) {
+            return false; // returns false for miss
+        } 
+
+    // If second player shoots
+    } else if (Turn == 2) {
+
+        //Distance formula between second bullet and first tank
+        if (sqrt(pow(bullet2.px - myTank1.xPos, 2) + pow(bullet2.py - myTank1.yPos, 2)) < 5)
+        {
+            return true; // returns true if hit
+
+        // if bullet hits terrain
+        } else if (bullet2.py >= myTerrain.height) {
+            return false; // returns false for miss
+        }
+    }
+}
+
+// Display Stats Method - Mayank
+void GameController::DisplayStats()
+{
+    //Code to Display Stats
+}
+
 //Button Methods ------------------------
 
 //Button Constructor - Mayank
@@ -385,6 +439,13 @@ void Projectile::calcShot()
     px += vx;
     py += vy;
     vy += ay;
+}
+
+// Projectile Draw - Mayank
+void Projectile::Draw()
+{
+    LCD.SetFontColor(LCD.White);
+    LCD.FillCircle(px, py, 10);
 }
 
 // Generic Functions - Mayank
