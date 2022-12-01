@@ -4,22 +4,37 @@
 #include <iostream>
 #include <cmath>
 #include <FEHUtility.h>
+#define DAMAGE 100
 
 /*
 TO DO LIST:
+KNOWN BUGS (text me if you are going to fix):
+    Unresolved:
+        Can aim and move at the same time
+        Vertical wraparound not restricted
+    Resolved:
+        90*n degree shots break the game
 
 JAKE:
     Done: 
         Tank.Aim(xComp, yComp)
-    Half Done:
         Tank.Draw()
         myController.Touch()
-    To Do:
         myController.takeTurn()
         Add tank turret positions to class
         Make the controls an object that works for both players
+    Half Done:
+        make crown pretty
+            fix spacing near healthbar
+        stats
+            self destructs
+    To Do:
         Make the tank only fire after the button is pressed
         Split aim and move actions into hover/click
+        320x240
+        wraparound - mod
+        draw line while aiming
+        numberes for velo/accel
 
 MAYANK:
     Done:
@@ -33,6 +48,7 @@ MAYANK:
 
     To Do:
         draw Tower()
+        Tower collision
 
 */
 
@@ -45,6 +61,15 @@ struct Statistics
     int tank2_shots_hit = 0;
     int tank1_wins = 0;
     int tank2_wins = 0;
+};
+
+//Crown Class - Jake
+class Crown{
+    public:
+        void Draw(int); //Draw the crown
+    private:
+        float player1x = 115; // where to draw if player 1 is the winner
+        float player2x = 280; // where to draw if player 2 is the winner
 };
 
 //Projectile Class Definition - Mayank
@@ -73,6 +98,7 @@ class Tank{
         //Constructor
         Tank(float, float, unsigned int);
         Tank();
+        void calcTurret(); //Calulate turret constants
         void getLocation(float *, float *); //returns tanks location
         void getAngle(float *, float *); //returns components of angle
         void Draw(); // Draw the tank
@@ -90,6 +116,7 @@ class Tank{
         int width; // width of tank hitbox
         int height; // hieght of tank hitbox
         int health;
+        float offX, offY, lx, ly; //internal computational variables
     //private:
         /*Return xPos, yPos, width, hieght to here*/
         float xComponent = 1; //angle x component
@@ -126,21 +153,25 @@ class Button{
 //GameController Class Definition - Jake
 class GameController{
     public:
-        void Draw(); //Draw function
-        GameController(int, int); //Constructor 
+        GameController(int, int); //Constructor
         bool detectHit(); //Checks for projectile hit
-        //void checkEnd(); //Checks for game end
+        bool checkEnd(); //Checks for game end
+        void Start(); //Creates initial gamestate
+        void Draw(); //Draw function 
+        void takeTurn(); //Updates turn
         void Touch(int, int); //Input handling
         void Fire(); // Fires a shot
-        int ReadyToFire; //Ready to Fire Flag
-        int Turn; //Stores which player is to-move: 1 -> player 1, 2 -> player 2
-        int Aiming; // Stores a player is aiming
+        void Move(int, int); // Moves Tank based on button pressed
         void DisplayStats(); // Displays Stats
         void displayWinner(int); // displays winner
         void calcShot();
-        int Fired;
-        void Move(int, int); // Moves Tank based on button pressed
+        int ReadyToFire; //Ready to Fire Flag
+        int Turn; //Stores which player is to-move: 1 -> player 1, 2 -> player 2
+        int Aiming; // Stores a player is aiming
+        int Fired; //Stores whether a shot is in the air
+        int Winner; //stores winner 1: Red (player 1), 2: Blue (player 2)
     private:
+        Crown myCrown; //Crown Object
         Terrain myTerrain; //Terrain object
         Tank myTank1; //Tank 1 object
         Tank myTank2; //Tank 2 object
@@ -205,6 +236,12 @@ int main()
                 break;
 
             case 1:
+                //Initialize game
+                if (gameOngoing == 0){
+                    //Start game
+                    myController.Start();
+                    gameOngoing = 1;
+                }
                 //Draw controller - J
                 myController.Draw();
                 //Wait for input - J
@@ -220,7 +257,17 @@ int main()
                     myController.Fire();
                     while (myController.Fired == 1){
                         myController.calcShot();
+                        myController.detectHit();
                         myController.Draw();
+                    }
+                    myController.takeTurn();
+                    if(myController.checkEnd() == true){
+                        //Update winner varible
+                        winner = myController.Winner;
+                        //set game state to stopped
+                        gameOngoing = 0;
+                        //Switch to victory screen
+                        menuState = 5;
                     }
                 }
                 break;
@@ -277,6 +324,21 @@ int main()
     return 0;
 }
 
+//Crown Methods ------------------------
+void Crown::Draw(int winner){
+    //Set Color
+    LCD.SetFontColor(GOLD);
+    //Draw Crown next to correct health bar
+    if (winner == 1){
+        LCD.FillCircle(player1x, 7.5, 5);
+    }
+    else if (winner == 2){
+        LCD.FillCircle(player2x, 7.5, 5);
+    }
+}
+
+
+
 //Tank Methods ------------------------
 //Default Tank constructor - Jake
 Tank::Tank(){}
@@ -293,6 +355,28 @@ Tank::Tank(float x, float y, unsigned int c = RED){
     health = 100; // health of tank
 }
 
+//Calc Turret
+void Tank::calcTurret(){
+    //Calculate computation variables using input variables
+    offX = xPos + turretX;
+    offY = yPos + turretY;
+    lx =  turretL*xComponent/(sqrt(pow(xComponent,2)+pow(yComponent,2)));
+    ly = turretL*yComponent/(sqrt(pow(xComponent,2)+pow(yComponent,2)));
+    
+    
+    //Avoid divide by zero
+    if(ly == 0){
+        ly = .1*abs(lx);
+        yComponent = .1*abs(xComponent);
+        printf("Working...");
+    }
+    if(lx == 0){
+        lx = .1*abs(ly);
+        xComponent = .1*abs(yComponent);
+        printf("Working...");
+    }
+}
+
 //Draw - Jake
 void Tank::Draw(){
     //Draw rectangle using color, position, and dimensions stored in tank object
@@ -303,26 +387,22 @@ void Tank::Draw(){
     
     //Draw turret - Working  but gross. Just do circle line circle for the love of god
     
-    //Computation variables for sanity - Handle these as class members - DO THIS
-    float a = xComponent;
-    float b = yComponent;
-    float r = turretR;
-    float l = turretL;
-    float offX = xPos + turretX;
-    float offY = yPos + turretY;
-    float lx =  l*a/(sqrt(pow(a,2)+pow(b,2)));
-    float ly = l*b/(sqrt(pow(a,2)+pow(b,2)));
     
+    //Calculate turret variables
+    calcTurret();
+    
+    //Draw turret
     LCD.DrawLine(offX, offY, offX + lx, offY + ly);
     
-    //Handle near zero cases
+    //Handle near zero cases - DO THIS
+
     //Draw turret
     //Edges
-    LCD.DrawLine(offX + r*a/abs(a)*cos(atan2(b,a)+ M_PI_2), offY + a*b/(abs(a*b))*r*sin((b/abs(b))*(atan2(b,a)+M_PI_2)), offX + r*a/abs(a)*cos(atan2(b,a)+ M_PI_2) + lx, offY + a*b/(abs(a*b))*r*sin((b/abs(b))*(atan2(b,a) + M_PI_2)) + ly);
-    LCD.DrawLine(offX + r*a/abs(a)*cos(atan2(b,a)- M_PI_2), offY + a*b/(abs(a*b))*r*sin((b/abs(b))*(atan2(b,a)-M_PI_2)), offX + r*a/abs(a)*cos(atan2(b,a)- M_PI_2) + lx, offY + a*b/(abs(a*b))*r*sin((b/abs(b))*(atan2(b,a) - M_PI_2)) + ly);
+    LCD.DrawLine(offX + turretR*xComponent/abs(xComponent)*cos(atan2(yComponent,xComponent)+ M_PI_2), offY + xComponent*yComponent/(abs(xComponent*yComponent))*turretR*sin((yComponent/abs(yComponent))*(atan2(yComponent,xComponent)+M_PI_2)), offX + turretR*xComponent/abs(xComponent)*cos(atan2(yComponent,xComponent)+ M_PI_2) + lx, offY + xComponent*yComponent/(abs(xComponent*yComponent))*turretR*sin((yComponent/abs(yComponent))*(atan2(yComponent,xComponent) + M_PI_2)) + ly);
+    LCD.DrawLine(offX + turretR*xComponent/abs(xComponent)*cos(atan2(yComponent,xComponent)- M_PI_2), offY + xComponent*yComponent/(abs(xComponent*yComponent))*turretR*sin((yComponent/abs(yComponent))*(atan2(yComponent,xComponent)-M_PI_2)), offX + turretR*xComponent/abs(xComponent)*cos(atan2(yComponent,xComponent)- M_PI_2) + lx, offY + xComponent*yComponent/(abs(xComponent*yComponent))*turretR*sin((yComponent/abs(yComponent))*(atan2(yComponent,xComponent) - M_PI_2)) + ly);
     //Muzzle
-    LCD.DrawLine(offX + r*a/abs(a)*cos(atan2(b,a)+ M_PI_2) + lx, offY + a*b/(abs(a*b))*r*sin((b/abs(b))*(atan2(b,a) + M_PI_2)) + ly, offX + r*a/abs(a)*cos(atan2(b,a)- M_PI_2) + lx, offY + a*b/(abs(a*b))*r*sin((b/abs(b))*(atan2(b,a) - M_PI_2)) + ly);
-    LCD.DrawLine(offX + r*a/abs(a)*cos(atan2(b,a)+ M_PI_2), offY + a*b/(abs(a*b))*r*sin((b/abs(b))*(atan2(b,a) + M_PI_2)), offX + r*a/abs(a)*cos(atan2(b,a)- M_PI_2), offY + a*b/(abs(a*b))*r*sin((b/abs(b))*(atan2(b,a) - M_PI_2)));
+    LCD.DrawLine(offX + turretR*xComponent/abs(xComponent)*cos(atan2(yComponent,xComponent)+ M_PI_2) + lx, offY + xComponent*yComponent/(abs(xComponent*yComponent))*turretR*sin((yComponent/abs(yComponent))*(atan2(yComponent,xComponent) + M_PI_2)) + ly, offX + turretR*xComponent/abs(xComponent)*cos(atan2(yComponent,xComponent)- M_PI_2) + lx, offY + xComponent*yComponent/(abs(xComponent*yComponent))*turretR*sin((yComponent/abs(yComponent))*(atan2(yComponent,xComponent) - M_PI_2)) + ly);
+    LCD.DrawLine(offX + turretR*xComponent/abs(xComponent)*cos(atan2(yComponent,xComponent)+ M_PI_2), offY + xComponent*yComponent/(abs(xComponent*yComponent))*turretR*sin((yComponent/abs(yComponent))*(atan2(yComponent,xComponent) + M_PI_2)), offX + turretR*xComponent/abs(xComponent)*cos(atan2(yComponent,xComponent)- M_PI_2), offY + xComponent*yComponent/(abs(xComponent*yComponent))*turretR*sin((yComponent/abs(yComponent))*(atan2(yComponent,xComponent) - M_PI_2)));
 }
 
 //Aim - Jake
@@ -374,27 +454,57 @@ Terrain::Terrain(int h = 200){
 
 //Draw Method - Jake
 void Terrain::Draw(){
-    //Create white line
-    LCD.SetFontColor(WHITE);
-    LCD.DrawHorizontalLine(height,0,360); //Draw ground line
+    //Create sky
+    LCD.SetFontColor(LIGHTBLUE);
+    LCD.FillRectangle(0,0,320, height);
+    //Create ground
+    LCD.SetFontColor(DARKGREEN);
+    LCD.FillRectangle(0,height,320, 240-height); //Draw ground line
 }
 
 //GameController Methods ------------------------
 
 //GameController Constructor - Jake
 GameController::GameController(int terrainType = 0, int playerCount = 0){
+    //Create a crown and store it
+    myCrown = Crown();
+    
     //Create Terrain and store it
     myTerrain = Terrain(200);
 
     //Create Tanks
-    myTank1 = Tank(50,200-20, RED);
-    myTank2 = Tank(200,200-20, BLUE);
+    myTank1 = Tank(50, myTerrain.height-myTank1.height, RED);
+    myTank2 = Tank(200, myTerrain.height-myTank2.height, BLUE);
 
     //Default gamestate values
     ReadyToFire = 0;
     Turn = 1;
     Aiming = 0;
 }
+//Start Function - Jake
+void GameController::Start(){
+    //place tanks
+    myTank1.xPos = 50;
+    myTank1.yPos = 200-myTank2.width;
+
+    //place tanks
+    myTank2.xPos = 200;
+    myTank2.yPos = 200-myTank2.width;
+
+    //Aim tanks at 90 degrees
+    myTank1.Aim(5,-1);
+    myTank2.Aim(-5,-1);
+
+    //reset hp
+    myTank1.health = 100;
+    myTank2.health = 100;
+
+    //Default gamestate values
+    ReadyToFire = 0;
+    Turn = 1;
+    Aiming = 0;
+}
+
 //Draw Function - Jake
 void GameController::Draw(){
     // clears the previous frame
@@ -404,40 +514,89 @@ void GameController::Draw(){
     //Draw Tanks
     myTank1.Draw();
     myTank2.Draw();
-    bullet1.Draw();
+    //Draw correct bullet if fired
+    if(Fired){
+        if (Turn == 1)
+        {
+            bullet1.Draw();
+        }
+        if (Turn == 2)
+        {
+            bullet2.Draw();
+        }
+    }
     //Draw Buttons
     rightArrow.Draw();
     leftArrow.Draw();
     // Draw Health
     myTank1.drawHealth(1);
     myTank2.drawHealth(2);
+    //Draw Crown
+    myCrown.Draw(Winner);
+
+    //Draw Firing controller
     if (Turn == 1){
         //Show controls for player 1
-        LCD.SetFontColor(WHITE);
-        //Sides
-        LCD.DrawRectangle (myTank1.xPos + myTank1.width + 10, myTank1.yPos + myTank1.height/2 - 1, 2, 2 );
-        LCD.DrawRectangle (myTank1.xPos - 10, myTank1.yPos + myTank1.height/2 - 1, 2, 2 );
+        LCD.SetFontColor(myTank1.color);
+        //Sides - DEAD CODE
+        //LCD.DrawRectangle (myTank1.xPos + myTank1.width + 10, myTank1.yPos + myTank1.height/2 - 1, 2, 2 );
+        //LCD.DrawRectangle (myTank1.xPos - 10, myTank1.yPos + myTank1.height/2 - 1, 2, 2 );
         //Top
-        LCD.DrawRectangle (myTank1.xPos + myTank1.width/2 -2 , myTank1.yPos - 8, 4, 4);
+        //LCD.DrawRectangle (myTank1.xPos + myTank1.width/2 -2 , myTank1.yPos - 8, 4, 4);
+        LCD.FillCircle(myTank1.xPos + myTank1.width/2 - 1, myTank1.yPos - 5, 3); // test code
     }
     if (Turn == 2){
         //Show controls for player 2
-        LCD.SetFontColor(WHITE);
-        //Sides
-        LCD.DrawRectangle (myTank2.xPos + myTank2.width + 10, myTank2.yPos + myTank2.height/2 - 1, 2, 2 );
-        LCD.DrawRectangle (myTank2.xPos - 10, myTank2.yPos + myTank2.height/2 - 1, 2, 2 );
+        LCD.SetFontColor(myTank2.color);
+        //Sides - DEAD CODE
+        //LCD.DrawRectangle (myTank2.xPos + myTank2.width + 10, myTank2.yPos + myTank2.height/2 - 1, 2, 2 );
+        //LCD.DrawRectangle (myTank2.xPos - 10, myTank2.yPos + myTank2.height/2 - 1, 2, 2 );
         //Top
-        LCD.DrawRectangle (myTank2.xPos + myTank2.width/2 -2 , myTank2.yPos - 8, 4, 4 );
+        LCD.FillCircle(myTank2.xPos + myTank2.width/2 - 1, myTank2.yPos - 5, 3); // test code
     }
 
     //Update Screen
     LCD.Update();
 }
 
+//Take Turn function - Jake
+void GameController::takeTurn(){
+    //Update turn variable
+    Turn = Turn%2 + 1;
+}
+//Check end function - Jake
+bool GameController::checkEnd(){
+    //If one of the tanks is dead return true, else return false
+    if (myTank2.health <= 0){
+        //update stats
+        gameStats.tank1_wins++;
+        //set winner
+        Winner = 1;
+        return true;
+    }
+    else if(myTank1.health <= 0){
+        //update stats
+        gameStats.tank2_wins++;
+        //set winner
+        Winner = 2;
+        return true;
+    }
+    else{
+        return false;
+    }
+}
+
+
 //Touch Function - Jake
 void GameController::Touch(int mx, int my){
     //Start Aiming if box clicked
-    if(Aiming == 0 && Turn == 1 &&  touchInBox(mx, my, myTank1.xPos + myTank1.width/2 -1 , myTank1.yPos - 10, 8, 8 )){
+    if(Aiming == 0 && Turn == 1 &&  touchInBox(mx, my, myTank1.xPos + myTank1.width/2 - 5 , myTank1.yPos - 11, 10, 10 )){
+        //Update Statuses
+        Aiming = 1;
+        ReadyToFire = 1;
+    }
+    //Start Aiming if box clicked
+    if(Aiming == 0 && Turn == 2 &&  touchInBox(mx, my, myTank2.xPos + myTank2.width/2 -5 , myTank2.yPos - 11, 10, 10)){
         //Update Statuses
         Aiming = 1;
         ReadyToFire = 1;
@@ -463,10 +622,18 @@ void GameController::Fire(){
     
     //Fire shot from correct tank
     if (Turn == 1){
-        bullet1.Fire(myTank1.xPos+12, myTank1.yPos, 0.01*(myTank1.xComponent), 0.01*(myTank1.yComponent));
+        //Update stats
+        gameStats.tank1_shots_fired++;
+        //Find starting pos using computation variables
+        myTank1.calcTurret();
+        bullet1.Fire(myTank1.offX + myTank1.lx, myTank1.offY + myTank1.ly, 0.01*(myTank1.xComponent), 0.01*(myTank1.yComponent));
     }
     if (Turn == 2){
-        bullet2.Fire(myTank2.xPos, myTank2.yPos, 0.01*(myTank2.xComponent), 0.01*(myTank2.yComponent));
+        //Update stats
+        gameStats.tank2_shots_fired++;
+        //Find starting pos using computation variables
+        myTank2.calcTurret();
+        bullet2.Fire(myTank2.offX + myTank2.lx, myTank2.offY + myTank2.ly, 0.01*(myTank2.xComponent), 0.01*(myTank2.yComponent));
     }
 }
 
@@ -474,7 +641,12 @@ void GameController::Fire(){
 
 void GameController::calcShot(){
     //Calculate shot trajectory
-    bullet1.calcShot();    
+    if (Turn == 1){
+        bullet1.calcShot();
+    }
+    if (Turn == 2){
+        bullet2.calcShot();
+    }
 }
 
 //Detect Hit Function - Mayank
@@ -484,27 +656,49 @@ bool GameController::detectHit()
     if (Turn == 1)
     {   
         //Distance formula between first bullet and second tank
-        if (touchInBox(bullet1.px, bullet1.py, myTank2.xPos, myTank2.yPos, myTank2.width, myTank2.height))
+        if (touchInBox(((int)bullet1.px)%320, ((int)bullet1.py)%240, myTank2.xPos, myTank2.yPos, myTank2.width, myTank2.height))
         {   
-            myTank2.health -= 30;
+            gameStats.tank1_shots_hit++; //Update stats
+            myTank2.health -= DAMAGE; //update health
+            Fired = 0; //Update fired variable
             return true; // returns true if hit
-         
+        }
+        //Distance formula between first bullet and second tank
+        else if (touchInBox(((int)bullet1.px)%320, ((int)bullet1.py)%240, myTank1.xPos, myTank1.yPos, myTank1.width, myTank1.height))
+        {   
+            gameStats.tank1_shots_hit++; //Update stats
+            myTank1.health -= DAMAGE; //update health
+            Fired = 0; //Update fired variable
+            return true; // returns true if hit
+        }  
         // if bullet hits terrain instead
-        } else if (bullet1.py >= myTerrain.height) {
+        else if (bullet1.py >= myTerrain.height) {
+            Fired = 0; //Update fired variable
             return false; // returns false for miss
         } 
 
     // If second player shoots
     } else if (Turn == 2) {
-
         //Distance formula between second bullet and first tank
-        if (touchInBox(bullet2.px, bullet2.py, myTank1.xPos, myTank1.yPos, myTank1.width, myTank1.height))
+        if (touchInBox(((int)bullet2.px)%320, ((int)bullet2.py)%240, myTank1.xPos, myTank1.yPos, myTank1.width, myTank1.height))
         {
-            myTank1.health -= 30;
+            gameStats.tank2_shots_hit++; //Update stats
+            myTank1.health -= DAMAGE; //update health
+            Fired = 0; //Update fired variable
             return true; // returns true if hit
 
+        }
+        //Distance formula between second bullet and second tank
+        else if (touchInBox(((int)bullet2.px)%320, ((int)bullet2.py)%240, myTank2.xPos, myTank2.yPos, myTank2.width, myTank2.height))
+        {   
+            gameStats.tank2_shots_hit++; //Update stats
+            myTank2.health -= DAMAGE; //update health
+            Fired = 0; //Update fired variable
+            return true; // returns true if hit
+        }
         // if bullet hits terrain
-        } else if (bullet2.py >= myTerrain.height) {
+        else if (bullet2.py >= myTerrain.height) {
+            Fired = 0; //Update fired variable
             return false; // returns false for miss
         }
     }
@@ -572,7 +766,7 @@ void GameController::DisplayStats()
     LCD.WriteAt(gameStats.tank1_shots_hit, 130, 90);
     LCD.SetFontColor(BLUE);
     LCD.Write("");
-    LCD.WriteAt(gameStats.tank1_shots_hit, 160, 90);
+    LCD.WriteAt(gameStats.tank2_shots_hit, 160, 90);
 
     LCD.SetFontColor(WHITE);
 }
@@ -738,6 +932,6 @@ void Projectile::calcShot()
 // Projectile Draw - Mayank
 void Projectile::Draw()
 {
-    LCD.SetFontColor(LCD.White);
+    LCD.SetFontColor(BLACK);
     LCD.FillCircle(px, py, 1);
 }
