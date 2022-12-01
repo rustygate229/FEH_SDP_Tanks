@@ -21,13 +21,19 @@ JAKE:
         Split aim and move actions into hover/click
 
 MAYANK:
-    Projectile.Fire()
-    Projectile.calcShot()
-    Projectile.Draw()
-    myController.detectHit();
-    myController.DisplayStats();
-    ~struct Stats
+    Done:
+        Projectile.Fire()
+        Projectile.calcShot()
+        Projectile.Draw()
+        myController.DisplayStats();
+        ~struct Stats
+    
+    Half Done:
+        myController.detectHit();
 
+    To Do:
+        draw Tower()
+        draw Health();
 
 */
 
@@ -100,6 +106,22 @@ class Terrain{
         int terrainType;
 };
 
+//Button Class Definition - Jake
+class Button{
+    public:
+        Button(int, int, int, int, char [10]); // constuctor
+        void Draw();
+        int Return();
+    public:
+        //Properties
+        int x; // x position
+        int y; // y position
+        int w; // width
+        int h; // height
+        char text[10];
+};
+
+
 //GameController Class Definition - Jake
 class GameController{
     public:
@@ -115,28 +137,16 @@ class GameController{
         void DisplayStats(); // Displays Stats
         void calcShot();
         int Fired;
+        void Move(int, int); // Moves Tank based on button pressed
     private:
         Terrain myTerrain; //Terrain object
         Tank myTank1; //Tank 1 object
         Tank myTank2; //Tank 2 object
         Projectile bullet1; // Tank 1's projectile
         Projectile bullet2; // Tank 2's projectile
+        Button rightArrow = Button(220, 210, 70, 20, "Right");
+        Button leftArrow = Button(10, 210, 70, 20, "Left");
         struct Statistics gameStats;
-};
-
-//Button Class Definition - Jake
-class Button{
-    public:
-        Button(int, int, int, int, char [10]); // constuctor
-        void Draw();
-        int Return();
-    public:
-        //Properties
-        int x; // x position
-        int y; // y position
-        int w; // width
-        int h; // height
-        char text[10];
 };
 
 //Menu Class Definition - Mayank
@@ -197,6 +207,7 @@ int main()
                 while(!LCD.Touch(&mx,&my));
                 //Handle input - J
                 while(LCD.Touch(&mx, &my)){
+                    myController.Move(mx, my);
                     myController.Touch(mx,my);
                     myController.Draw();
                 }
@@ -206,15 +217,7 @@ int main()
                     while (myController.Fired == 1){
                         myController.calcShot();
                         myController.Draw();
-                        }
-                    /*
-                    if(myController.detectHit()==1){
-                        if(myController.checkEnd()==1){
-                            gameOngoing = 0;
-                        }
                     }
-                    myController.takeTurn();*/
-                    
                 }
                 break;
             case 2:
@@ -368,6 +371,9 @@ void GameController::Draw(){
     myTank1.Draw();
     myTank2.Draw();
     bullet1.Draw();
+    //Draw Buttons
+    rightArrow.Draw();
+    leftArrow.Draw();
     if (Turn == 1){
         //Show controls for player 1
         LCD.SetFontColor(WHITE);
@@ -420,7 +426,7 @@ void GameController::Fire(){
     
     //Fire shot from correct tank
     if (Turn == 1){
-        bullet1.Fire(myTank1.xPos, myTank1.yPos, 0.01*(myTank1.xComponent), 0.01*(myTank1.yComponent));
+        bullet1.Fire(myTank1.xPos+12, myTank1.yPos, 0.01*(myTank1.xComponent), 0.01*(myTank1.yComponent));
     }
     if (Turn == 2){
         bullet2.Fire(myTank2.xPos, myTank2.yPos, 0.01*(myTank2.xComponent), 0.01*(myTank2.yComponent));
@@ -441,7 +447,7 @@ bool GameController::detectHit()
     if (Turn == 1)
     {   
         //Distance formula between first bullet and second tank
-        if (sqrt(pow(bullet1.px - myTank2.xPos, 2) + pow(bullet1.py - myTank2.yPos, 2)) < 5)
+        if (sqrt(pow(bullet1.px - myTank2.xPos, 2) + pow(bullet1.py - myTank2.yPos, 2)) < 50)
         {
             return true; // returns true if hit
          
@@ -454,13 +460,43 @@ bool GameController::detectHit()
     } else if (Turn == 2) {
 
         //Distance formula between second bullet and first tank
-        if (sqrt(pow(bullet2.px - myTank1.xPos, 2) + pow(bullet2.py - myTank1.yPos, 2)) < 5)
+        if (sqrt(pow(bullet2.px - myTank1.xPos, 2) + pow(bullet2.py - myTank1.yPos, 2)) < 50)
         {
             return true; // returns true if hit
 
         // if bullet hits terrain
         } else if (bullet2.py >= myTerrain.height) {
             return false; // returns false for miss
+        }
+    }
+}
+
+//Move Function - Mayank
+void GameController::Move(int mx, int my)
+{
+    if (Turn == 1)
+    {
+        if (touchInBox(mx, my, rightArrow.x, rightArrow.y, rightArrow.w, rightArrow.h))
+        {
+            myTank1.Move(1, 0);
+        }
+
+        if (touchInBox(mx, my, leftArrow.x, leftArrow.y, leftArrow.w, leftArrow.h))
+        {
+            myTank1.Move(-1, 0);
+        }
+    }
+
+    if (Turn == 2)
+    {
+        if (touchInBox(mx, my, rightArrow.x, rightArrow.y, rightArrow.w, rightArrow.h))
+        {
+            myTank2.Move(1, 0);
+        }
+
+        if (touchInBox(mx, my, leftArrow.x, leftArrow.y, leftArrow.w, leftArrow.h))
+        {
+            myTank2.Move(-1, 0);
         }
     }
 }
