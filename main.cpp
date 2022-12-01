@@ -3,6 +3,7 @@
 #include "FEHLCD.h"
 #include <iostream>
 #include <cmath>
+#include <FEHUtility.h>
 
 /*
 TO DO LIST:
@@ -27,13 +28,11 @@ MAYANK:
         Projectile.Draw()
         myController.DisplayStats();
         ~struct Stats
-    
-    Half Done:
         myController.detectHit();
+        draw Health();
 
     To Do:
         draw Tower()
-        draw Health();
 
 */
 
@@ -80,6 +79,7 @@ class Tank{
         void Move(float, float); //Moves the tank
         void Aim(float, float); //Aims the tank 
         void Fire(); //Fires a shot
+        void drawHealth(int);
         //Out of private for testing purposes: - TEST CODE
         float turretX = 10; //turret x position relative to the x position
         float turretY = 8; //turret y position relative to the y position
@@ -89,6 +89,7 @@ class Tank{
         float yPos; // y position
         int width; // width of tank hitbox
         int height; // hieght of tank hitbox
+        int health;
     //private:
         /*Return xPos, yPos, width, hieght to here*/
         float xComponent = 1; //angle x component
@@ -135,6 +136,7 @@ class GameController{
         int Turn; //Stores which player is to-move: 1 -> player 1, 2 -> player 2
         int Aiming; // Stores a player is aiming
         void DisplayStats(); // Displays Stats
+        void displayWinner(int); // displays winner
         void calcShot();
         int Fired;
         void Move(int, int); // Moves Tank based on button pressed
@@ -171,11 +173,13 @@ class Menu
 
 int main()
 {
-    // 0: Menu, 1: Play, 2: How To, 3: Credits, 4: Stats
+    // 0: Menu, 1: Play, 2: How To, 3: Credits, 4: Stats, 5: Winner Screen
     int menuState = 0;
     //Game state variable
     int gameOngoing = 0;
 
+    //Winner variable
+    int winner = 0;
     //Mouse x and y variables
     int mx = 0, my = 0;
     
@@ -255,6 +259,16 @@ int main()
                 {
                     menuState = 0;
                 }
+                break;
+
+            case 5:
+                LCD.Clear();
+                myController.displayWinner(winner);
+
+                if(Return.Return())
+                {
+                    menuState = 0;
+                }
         }
 
         LCD.Update(); //Draws the new frame
@@ -276,6 +290,7 @@ Tank::Tank(float x, float y, unsigned int c = RED){
     yPos = y;
     width = 20; // width of tank hitbox
     height = 20; // hieght of tank hitbox
+    health = 100; // health of tank
 }
 
 //Draw - Jake
@@ -328,6 +343,25 @@ void Tank::Move(float dx, float dy){
     yPos += dy; //y position
 }
 
+// Draw Health - Mayank
+void Tank::drawHealth(int a)
+{
+    if (a == 1)
+    {   
+        LCD.SetFontColor(RED);
+        LCD.WriteAt("Red:", 0, 0);
+        LCD.FillRectangle(50, 0, health / 2, 15);
+        LCD.SetFontColor(WHITE);
+    }
+    else if (a == 2)
+    {   
+        LCD.SetFontColor(BLUE);
+        LCD.WriteAt("Blue:", 160, 0);
+        LCD.FillRectangle(220, 0, health / 2, 15);
+        LCD.SetFontColor(WHITE);
+    }
+}
+
 //Terrain Methods ------------------------
 
 //Terrain Constructor - Jake
@@ -374,6 +408,9 @@ void GameController::Draw(){
     //Draw Buttons
     rightArrow.Draw();
     leftArrow.Draw();
+    // Draw Health
+    myTank1.drawHealth(1);
+    myTank2.drawHealth(2);
     if (Turn == 1){
         //Show controls for player 1
         LCD.SetFontColor(WHITE);
@@ -447,8 +484,9 @@ bool GameController::detectHit()
     if (Turn == 1)
     {   
         //Distance formula between first bullet and second tank
-        if (sqrt(pow(bullet1.px - myTank2.xPos, 2) + pow(bullet1.py - myTank2.yPos, 2)) < 50)
-        {
+        if (touchInBox(bullet1.px, bullet1.py, myTank2.xPos, myTank2.yPos, myTank2.width, myTank2.height))
+        {   
+            myTank2.health -= 30;
             return true; // returns true if hit
          
         // if bullet hits terrain instead
@@ -460,8 +498,9 @@ bool GameController::detectHit()
     } else if (Turn == 2) {
 
         //Distance formula between second bullet and first tank
-        if (sqrt(pow(bullet2.px - myTank1.xPos, 2) + pow(bullet2.py - myTank1.yPos, 2)) < 50)
+        if (touchInBox(bullet2.px, bullet2.py, myTank1.xPos, myTank1.yPos, myTank1.width, myTank1.height))
         {
+            myTank1.health -= 30;
             return true; // returns true if hit
 
         // if bullet hits terrain
@@ -537,6 +576,29 @@ void GameController::DisplayStats()
 
     LCD.SetFontColor(WHITE);
 }
+
+// Winner Screen Method
+void GameController::displayWinner(int a)
+{
+    if (a == 1) //If tank 1 wins
+    {
+        LCD.SetBackgroundColor(WHITE);
+        LCD.SetFontColor(RED);
+        LCD.WriteAt("Red Tank Wins!!!!!", 50, 50);
+        LCD.WriteAt("Congratulations!", 50, 70);
+    }
+    else if (a == 2) //If tank 2 wins
+    {
+        LCD.SetBackgroundColor(WHITE);
+        LCD.SetFontColor(BLUE);
+        LCD.WriteAt("Blue Tank Wins!!!!!", 50, 50);
+        LCD.WriteAt("Congratulations!", 50, 70);
+    }
+    // Resets colors to default
+    LCD.SetBackgroundColor(BLACK);
+    LCD.SetFontColor(WHITE);
+}
+
 //Button Methods ------------------------
 
 //Button Constructor - Mayank
