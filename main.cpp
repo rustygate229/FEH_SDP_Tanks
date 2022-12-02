@@ -11,10 +11,12 @@
 TO DO LIST:
 KNOWN BUGS (text me if you are going to fix):
     Unresolved:
+        Wraparound works lower than a certain height
         Can aim and move at the same time
         Vertical wraparound not restricted
     Resolved:
         90*n degree shots break the game
+        Collisions don't work if they wraparound from the left
 
 JAKE:
     Done: 
@@ -47,13 +49,12 @@ MAYANK:
         myController.detectHit();
         draw Health();
         draw Tower()
-
+        Tower Collision
     To Do:
-        Tower collision
 
 */
 
-//Stats Struct
+//Stats Struct - mayank
 struct Statistics
 {
     int tank1_shots_fired = 0;
@@ -330,6 +331,8 @@ int main()
 }
 
 //Crown Methods ------------------------
+
+//Crown Draw - Jake
 void Crown::Draw(int winner){
     //Set Color
     LCD.SetFontColor(GOLD);
@@ -360,7 +363,7 @@ Tank::Tank(float x, float y, unsigned int c = RED){
     health = 100; // health of tank
 }
 
-//Calc Turret
+//Calc Turret - Jake
 void Tank::calcTurret(){
     //Calculate computation variables using input variables
     offX = xPos + turretX;
@@ -667,7 +670,13 @@ bool GameController::detectHit()
     // If the first player shoots
     if (Turn == 1)
     {   
-        //Distance formula between first bullet and second tank
+        // patch for wraparound shots
+        // modulus operation does not work for negative
+        if (bullet1.px < 0)
+        {
+            bullet1.px += 320;
+        }
+        //If bullet 1 within tank 2 rectangle
         if (touchInBox(((int)bullet1.px)%320, ((int)bullet1.py)%240, myTank2.xPos, myTank2.yPos, myTank2.width, myTank2.height))
         {   
             gameStats.tank1_shots_hit++; //Update stats
@@ -675,23 +684,34 @@ bool GameController::detectHit()
             Fired = 0; //Update fired variable
             return true; // returns true if hit
         }
-        //Distance formula between first bullet and second tank
+        // If bullet 1 within tank 1 rectangle
         else if (touchInBox(((int)bullet1.px)%320, ((int)bullet1.py)%240, myTank1.xPos, myTank1.yPos, myTank1.width, myTank1.height))
         {   
             gameStats.tank1_shots_hit++; //Update stats
             myTank1.health -= DAMAGE; //update health
             Fired = 0; //Update fired variable
             return true; // returns true if hit
-        }  
+        }
+        else if (touchInBox(((int)bullet1.px)%320, ((int)bullet1.py)%240, myTerrain.towerX, myTerrain.towerY, 90, 90))
+        {   
+            Fired = 0; //Update fired variable
+            return false; // returns false for miss
+        } 
         // if bullet hits terrain instead
         else if (bullet1.py >= myTerrain.height) {
             Fired = 0; //Update fired variable
             return false; // returns false for miss
-        } 
+        }
 
     // If second player shoots
     } else if (Turn == 2) {
-        //Distance formula between second bullet and first tank
+        // patch for wraparound shots
+        // modulus operation does not work for negative
+        if (bullet2.px < 0)
+        {
+            bullet2.px += 320;
+        }
+        //If bullet 2 within tank 1 rectangle
         if (touchInBox(((int)bullet2.px)%320, ((int)bullet2.py)%240, myTank1.xPos, myTank1.yPos, myTank1.width, myTank1.height))
         {
             gameStats.tank2_shots_hit++; //Update stats
@@ -700,13 +720,19 @@ bool GameController::detectHit()
             return true; // returns true if hit
 
         }
-        //Distance formula between second bullet and second tank
+        //If bullet 2 within tank 2 rectangle
         else if (touchInBox(((int)bullet2.px)%320, ((int)bullet2.py)%240, myTank2.xPos, myTank2.yPos, myTank2.width, myTank2.height))
         {   
             gameStats.tank2_shots_hit++; //Update stats
             myTank2.health -= DAMAGE; //update health
             Fired = 0; //Update fired variable
             return true; // returns true if hit
+        }
+        // If bullet 1 within tower's rectangle
+        else if (touchInBox(((int)bullet2.px)%320, ((int)bullet2.py)%240, myTerrain.towerX, myTerrain.towerY, 100, 100))
+        {   
+            Fired = 0; //Update fired variable
+            return false; // returns false for miss
         }
         // if bullet hits terrain
         else if (bullet2.py >= myTerrain.height) {
@@ -731,7 +757,7 @@ void GameController::Move(int mx, int my)
 
         if (touchInBox(mx, my, leftArrow.x, leftArrow.y, leftArrow.w, leftArrow.h)) // if left button is pressed
         {
-            if (myTank1.xPos - 1 > 0) // if the movement does not go past the screen
+            if (myTank1.xPos - 1 > 4) // if the movement does not go past the screen
             {
                 myTank1.Move(-1, 0); // Move the tank 1 pixel to the left
             }
@@ -742,7 +768,7 @@ void GameController::Move(int mx, int my)
     {
         if (touchInBox(mx, my, rightArrow.x, rightArrow.y, rightArrow.w, rightArrow.h)) // if right button is pressed
         {
-            if (myTank2.xPos + 1 < 300) // if the movement does not go past the screen
+            if (myTank2.xPos + 1 < 295) // if the movement does not go past the screen
             {
                 myTank2.Move(1, 0); // Move the tank 1 pixel to the right
             }
@@ -796,7 +822,7 @@ void GameController::DisplayStats()
     LCD.SetFontColor(WHITE);
 }
 
-// Winner Screen Method
+// Winner Screen Method - Mayank
 void GameController::displayWinner(int a)
 {
     if (a == 1) //If tank 1 wins
