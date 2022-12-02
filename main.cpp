@@ -46,9 +46,9 @@ MAYANK:
         ~struct Stats
         myController.detectHit();
         draw Health();
+        draw Tower()
 
     To Do:
-        draw Tower()
         Tower collision
 
 */
