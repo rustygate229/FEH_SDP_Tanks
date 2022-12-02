@@ -5,18 +5,18 @@
 #include <cmath>
 #include <FEHUtility.h>
 #include <FEHImages.h>
-#define DAMAGE 30
+#define DAMAGE 100
 
 /*
 TO DO LIST:
 KNOWN BUGS (text me if you are going to fix):
     Unresolved:
-        Wraparound works lower than a certain height
         Can aim and move at the same time
-        Vertical wraparound not restricted
     Resolved:
         90*n degree shots break the game
         Collisions don't work if they wraparound from the left
+        Vertical wraparound not restricted
+        Wraparound works lower than a certain height
 
 JAKE:
     Done: 
@@ -674,7 +674,16 @@ bool GameController::detectHit()
         // modulus operation does not work for negative
         if (bullet1.px < 0)
         {
-            bullet1.px += 320;
+            // If it is below a certain height
+            if (bullet1.py > 160)
+            {
+                Fired = 0; //Update fired variable
+                return false; // returns false for miss
+            }
+            else{
+                // wrap the bullet around
+                bullet1.px += 320;
+            }
         }
         //If bullet 1 within tank 2 rectangle
         if (touchInBox(((int)bullet1.px)%320, ((int)bullet1.py)%240, myTank2.xPos, myTank2.yPos, myTank2.width, myTank2.height))
@@ -692,13 +701,13 @@ bool GameController::detectHit()
             Fired = 0; //Update fired variable
             return true; // returns true if hit
         }
-        else if (touchInBox(((int)bullet1.px)%320, ((int)bullet1.py)%240, myTerrain.towerX, myTerrain.towerY, 90, 90))
+        else if (touchInBox(((int)bullet1.px)%320, ((int)bullet1.py)%240, myTerrain.towerX+10, myTerrain.towerY, 80, 90))
         {   
             Fired = 0; //Update fired variable
             return false; // returns false for miss
         } 
-        // if bullet hits terrain instead
-        else if (bullet1.py >= myTerrain.height) {
+        // if bullet hits terrain or upper screen instead
+        else if (bullet1.py >= myTerrain.height || bullet1.py <= 0) {
             Fired = 0; //Update fired variable
             return false; // returns false for miss
         }
@@ -729,13 +738,19 @@ bool GameController::detectHit()
             return true; // returns true if hit
         }
         // If bullet 1 within tower's rectangle
-        else if (touchInBox(((int)bullet2.px)%320, ((int)bullet2.py)%240, myTerrain.towerX, myTerrain.towerY, 100, 100))
+        else if (touchInBox(((int)bullet2.px)%320, ((int)bullet2.py)%240, myTerrain.towerX, myTerrain.towerY, 80, 90))
         {   
             Fired = 0; //Update fired variable
             return false; // returns false for miss
         }
-        // if bullet hits terrain
-        else if (bullet2.py >= myTerrain.height) {
+        // if bullet hits terrain or upper screen
+        else if (bullet2.py >= myTerrain.height || bullet2.py <= 0) {
+            Fired = 0; //Update fired variable
+            return false; // returns false for miss
+        }
+        // if it hits the screen below a certain height
+        else if (bullet2.px > 320 && bullet2.py > 160)
+        {
             Fired = 0; //Update fired variable
             return false; // returns false for miss
         }
@@ -788,6 +803,7 @@ void GameController::Move(int mx, int my)
 // Display Stats Method - Mayank
 void GameController::DisplayStats()
 {
+    LCD.SetFontColor(BLACK);
     LCD.WriteAt("Game Statistics:", 0, 0);
 
     LCD.SetFontColor(RED);
@@ -795,7 +811,7 @@ void GameController::DisplayStats()
     LCD.SetFontColor(BLUE);
     LCD.WriteAt("Player 2", 150, 30);
 
-    LCD.SetFontColor(WHITE);
+    LCD.SetFontColor(BLACK);
     LCD.WriteAt("Wins:", 0, 60);
     LCD.SetFontColor(RED);
     LCD.WriteAt(gameStats.tank1_wins, 70, 60);
@@ -803,7 +819,7 @@ void GameController::DisplayStats()
     LCD.Write("");
     LCD.WriteAt(gameStats.tank2_wins, 100, 60);
 
-    LCD.SetFontColor(WHITE);
+    LCD.SetFontColor(BLACK);
     LCD.WriteAt("Shots Fired:", 0, 75);
     LCD.SetFontColor(RED);
     LCD.WriteAt(gameStats.tank1_shots_fired, 150, 75);
@@ -811,15 +827,13 @@ void GameController::DisplayStats()
     LCD.Write("");
     LCD.WriteAt(gameStats.tank2_shots_fired, 180, 75);
 
-    LCD.SetFontColor(WHITE);
+    LCD.SetFontColor(BLACK);
     LCD.WriteAt("Shots Hit:", 0, 90);
     LCD.SetFontColor(RED);
     LCD.WriteAt(gameStats.tank1_shots_hit, 130, 90);
     LCD.SetFontColor(BLUE);
     LCD.Write("");
     LCD.WriteAt(gameStats.tank2_shots_hit, 160, 90);
-
-    LCD.SetFontColor(WHITE);
 }
 
 // Winner Screen Method - Mayank
@@ -827,21 +841,21 @@ void GameController::displayWinner(int a)
 {
     if (a == 1) //If tank 1 wins
     {
-        LCD.SetBackgroundColor(WHITE);
+        LCD.SetBackgroundColor(LIGHTBLUE);
         LCD.SetFontColor(RED);
         LCD.WriteAt("Red Tank Wins!!!!!", 50, 50);
         LCD.WriteAt("Congratulations!", 50, 70);
     }
     else if (a == 2) //If tank 2 wins
     {
-        LCD.SetBackgroundColor(WHITE);
+        LCD.SetBackgroundColor(LIGHTBLUE);
         LCD.SetFontColor(BLUE);
         LCD.WriteAt("Blue Tank Wins!!!!!", 50, 50);
         LCD.WriteAt("Congratulations!", 50, 70);
     }
     // Resets colors to default
-    LCD.SetBackgroundColor(BLACK);
-    LCD.SetFontColor(WHITE);
+    LCD.SetBackgroundColor(LIGHTBLUE);
+    LCD.SetFontColor(BLACK);
 }
 
 //Button Methods ------------------------
@@ -862,7 +876,7 @@ void Button::Draw()
 {
     LCD.SetFontColor(RED);
     LCD.DrawRectangle(x, y, w, h);
-    LCD.SetFontColor(WHITE);
+    LCD.SetFontColor(BLACK);
     LCD.WriteAt(text, x+w/10, y+h/5);
 }
 
@@ -897,7 +911,8 @@ Menu::Menu() //constructor - Both?
 //Menu Draw - Mayank
 void Menu::Draw()
 {
-    LCD.WriteAt("Tanks 2.0", 90, 0);
+    LCD.SetBackgroundColor(LIGHTBLUE);
+    LCD.WriteAt("Tanks 2.0", 100, 20);
 
     credits.Draw();
     playButton.Draw();
