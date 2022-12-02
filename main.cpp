@@ -4,7 +4,8 @@
 #include <iostream>
 #include <cmath>
 #include <FEHUtility.h>
-#define DAMAGE 100
+#include <FEHImages.h>
+#define DAMAGE 30
 
 /*
 TO DO LIST:
@@ -130,8 +131,10 @@ class Terrain{
         void Draw(); //Draw function
         Terrain(int); //Flat terrain Constructor
     //private:
+        FEHImage tower;
         int height;
         int terrainType;
+        int towerX, towerY;
 };
 
 //Button Class Definition - Jake
@@ -291,6 +294,8 @@ int main()
             case 3:
                 LCD.WriteLine("Game made by Mayank");
                 LCD.WriteLine("Karnati and Jake Browning");
+                LCD.WriteLine("Tower icon is a courtesy");
+                LCD.WriteLine("of Flaticon.");
                 
                 if(Return.Return())
                 {
@@ -450,6 +455,9 @@ Terrain::Terrain(int h = 200){
     height = h;
     //set terrain type to default (0)
     terrainType = 0;
+    //set tower's coordinates
+    towerX = 105;
+    towerY = 100;
 }
 
 //Draw Method - Jake
@@ -460,6 +468,10 @@ void Terrain::Draw(){
     //Create ground
     LCD.SetFontColor(DARKGREEN);
     LCD.FillRectangle(0,height,320, 240-height); //Draw ground line
+    //Create Tower
+    tower.Open("towerFEH.pic");
+    tower.Draw(towerX, towerY);
+    tower.Close();
 }
 
 //GameController Methods ------------------------
@@ -474,7 +486,7 @@ GameController::GameController(int terrainType = 0, int playerCount = 0){
 
     //Create Tanks
     myTank1 = Tank(50, myTerrain.height-myTank1.height, RED);
-    myTank2 = Tank(200, myTerrain.height-myTank2.height, BLUE);
+    myTank2 = Tank(250, myTerrain.height-myTank2.height, BLUE);
 
     //Default gamestate values
     ReadyToFire = 0;
@@ -488,7 +500,7 @@ void GameController::Start(){
     myTank1.yPos = 200-myTank2.width;
 
     //place tanks
-    myTank2.xPos = 200;
+    myTank2.xPos = 250;
     myTank2.yPos = 200-myTank2.width;
 
     //Aim tanks at 90 degrees
@@ -707,29 +719,42 @@ bool GameController::detectHit()
 //Move Function - Mayank
 void GameController::Move(int mx, int my)
 {
-    if (Turn == 1)
+    if (Turn == 1) // if it's red tank's turn
     {
-        if (touchInBox(mx, my, rightArrow.x, rightArrow.y, rightArrow.w, rightArrow.h))
+        if (touchInBox(mx, my, rightArrow.x, rightArrow.y, rightArrow.w, rightArrow.h)) // if right button is pressed
         {
-            myTank1.Move(1, 0);
+            if (myTank1.xPos + 1 < 95) // if the movement does not go past the tower
+            {
+                myTank1.Move(1, 0); // Move the tank 1 pixel to the right
+            }
         }
 
-        if (touchInBox(mx, my, leftArrow.x, leftArrow.y, leftArrow.w, leftArrow.h))
+        if (touchInBox(mx, my, leftArrow.x, leftArrow.y, leftArrow.w, leftArrow.h)) // if left button is pressed
         {
-            myTank1.Move(-1, 0);
+            if (myTank1.xPos - 1 > 0) // if the movement does not go past the screen
+            {
+                myTank1.Move(-1, 0); // Move the tank 1 pixel to the left
+            }
         }
     }
 
-    if (Turn == 2)
+    if (Turn == 2) // if it's blue tank's turn
     {
-        if (touchInBox(mx, my, rightArrow.x, rightArrow.y, rightArrow.w, rightArrow.h))
+        if (touchInBox(mx, my, rightArrow.x, rightArrow.y, rightArrow.w, rightArrow.h)) // if right button is pressed
         {
-            myTank2.Move(1, 0);
+            if (myTank2.xPos + 1 < 300) // if the movement does not go past the screen
+            {
+                myTank2.Move(1, 0); // Move the tank 1 pixel to the right
+            }
+            
         }
 
-        if (touchInBox(mx, my, leftArrow.x, leftArrow.y, leftArrow.w, leftArrow.h))
+        if (touchInBox(mx, my, leftArrow.x, leftArrow.y, leftArrow.w, leftArrow.h)) // if left button is pressed
         {
-            myTank2.Move(-1, 0);
+            if (myTank2.xPos - 1 > 200) // if the movement does not go past the tower
+            {
+                myTank2.Move(-1, 0); // Move the tank 1 pixel to the left
+            }
         }
     }
 }
