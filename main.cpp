@@ -293,13 +293,13 @@ int main()
             //Instruction Page
             case 2:
                 //Write instructions
-                LCD.WriteLine("Here are the instructions:");
                 LCD.WriteLine("There are 2 players, each with 100 hp");
                 LCD.WriteLine("Move the tank using the");
-                LCD.WriteLine("arrows");
-                LCD.WriteLine("Make a vector by clicking and dragging");
-                LCD.WriteLine("to shoot the projectile");
+                LCD.WriteLine("movement buttons");
+                LCD.WriteLine("To shoot the projectile, ");
+                LCD.WriteLine("click in the circle, drag out in a direction");
                 LCD.WriteLine("and release");
+                LCD.WriteLine("Shots will wraparound the screen");
                 LCD.WriteLine("First to lose all hp loses");
                 
                 // Return Button back to main menu
