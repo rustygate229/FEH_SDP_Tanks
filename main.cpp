@@ -5,20 +5,21 @@
 #include <cmath>
 #include <FEHUtility.h>
 #include <FEHImages.h>
-#define DAMAGE 100
+#define DAMAGE 34
 
 /*
 TO DO LIST:
 KNOWN BUGS (text me if you are going to fix):
     Unresolved:
         Can aim and move at the same time
-        Jittery projectile path
     Resolved:
         can't fire high shots
         90*n degree shots break the game
         Collisions don't work if they wraparound from the left
         Vertical wraparound not restricted
         Wraparound works lower than a certain height
+        Jittery projectile path
+        glitchy aiming
 
 JAKE:
     Done: 
@@ -26,19 +27,11 @@ JAKE:
         Tank.Draw()
         myController.Touch()
         myController.takeTurn()
-        Add tank turret positions to class
-        Make the controls an object that works for both players
-        wraparound - mod
-    Half Done:
-        make crown pretty
-            fix spacing near healthbar
-        stats
-            self destructs
-    To Do:
+        calcTurret()
+        Crown.Draw()
         adjust scale for shot vector components (make the shots stronger for the distance pulled)
-        draw line while aiming !!
-        numberes for velo/accel !!
-
+        draw line while aiming 
+        numberes for velo/accel    
 MAYANK:
     Done:
         Projectile.Fire()
@@ -50,6 +43,7 @@ MAYANK:
         draw Health();
         draw Tower()
         Tower Collision
+        wraparound - mod
     To Do:
 
 */
@@ -68,8 +62,14 @@ struct Statistics
 //Crown Class - Jake
 class Crown{
     public:
-        void Draw(int); //Draw the crown
+        void Draw(int, int); //Draw the crown
     private:
+        bool design[4][8] = {
+            1,0,0,0,0,0,0,1,
+            1,1,0,1,1,0,1,1,
+            1,1,1,1,1,1,1,1,
+            1,1,1,1,1,1,1,1
+        }; //truth table for crown pixels 
         float player1x = 110; // where to draw if player 1 is the winner
         float player2x = 280; // where to draw if player 2 is the winner
 };
@@ -297,7 +297,9 @@ int main()
                 LCD.WriteLine("Karnati and Jake Browning");
                 LCD.WriteLine("Tower icon is a courtesy");
                 LCD.WriteLine("of Flaticon.");
-                
+                LCD.WriteLine("Drawline algorithm sourced from:");
+                LCD.WriteLine("https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm.");
+
                 if(Return.Return())
                 {
                     menuState = 0;
@@ -333,15 +335,16 @@ int main()
 //Crown Methods ------------------------
 
 //Crown Draw - Jake
-void Crown::Draw(int winner){
+void Crown::Draw(int sx, int sy){
     //Set Color
     LCD.SetFontColor(GOLD);
-    //Draw Crown next to correct health bar
-    if (winner == 1){
-        LCD.FillCircle(player1x, 7.5, 5);
-    }
-    else if (winner == 2){
-        LCD.FillCircle(player2x, 7.5, 5);
+    //Draw crown relative to given points
+    for (int x = 0; x < 8; x++){
+        for (int y = 0; y < 4; y++){
+            if (design[y][x] == true){
+                LCD.DrawPixel(sx + x, sy +y);
+            }
+        }
     }
 }
 
@@ -373,13 +376,13 @@ void Tank::calcTurret(){
     
     
     //Avoid divide by zero
-    if(ly == 0){
-        ly = .1*abs(lx);
-        yComponent = .1*abs(xComponent);
+    if((int)ly == 0){
+        ly = .01*abs(lx);
+        yComponent += .01;
     }
-    if(lx == 0){
-        lx = .1*abs(ly);
-        xComponent = .1*abs(yComponent);
+    if((int)lx == 0){
+        lx = .01*abs(ly);
+        xComponent += .01;
     }
 }
 
@@ -412,9 +415,10 @@ void Tank::Draw(){
     
     //Draw turret
     //Calculate turret variables
-    calcTurret();
+    calcTurret();    
     //Base
     LCD.FillRectangle(xPos + width/4, yPos + height/4, width/2, height/4);
+    //Barrel
     //Centerline
     LCD.DrawLine(offX, offY, offX + lx, offY + ly);
     //Edges
@@ -574,8 +578,13 @@ void GameController::Draw(){
     // Draw Health
     myTank1.drawHealth(1);
     myTank2.drawHealth(2);
-    //Draw Crown
-    myCrown.Draw(Winner);
+    //Draw Crown on winners head
+    if (Winner == 1){
+        myCrown.Draw(myTank1.xPos + myTank1.width/4.0 +1, myTank1.yPos);
+    }
+    if (Winner == 2){
+        myCrown.Draw(myTank2.xPos + myTank2.width/4.0 +1, myTank2.yPos);
+    }
 
     //Draw Firing controller
     if (Turn == 1){
