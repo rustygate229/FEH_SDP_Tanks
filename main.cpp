@@ -7,47 +7,6 @@
 #include <FEHImages.h>
 #define DAMAGE 34
 
-/*
-TO DO LIST:
-KNOWN BUGS (text me if you are going to fix):
-    Unresolved:
-        Can aim and move at the same time
-    Resolved:
-        can't fire high shots
-        90*n degree shots break the game
-        Collisions don't work if they wraparound from the left
-        Vertical wraparound not restricted
-        Wraparound works lower than a certain height
-        Jittery projectile path
-        glitchy aiming
-
-JAKE:
-    Done: 
-        Tank.Aim(xComp, yComp)
-        Tank.Draw()
-        myController.Touch()
-        myController.takeTurn()
-        calcTurret()
-        Crown.Draw()
-        adjust scale for shot vector components (make the shots stronger for the distance pulled)
-        draw line while aiming 
-        numberes for velo/accel    
-MAYANK:
-    Done:
-        Projectile.Fire()
-        Projectile.calcShot()
-        Projectile.Draw()
-        myController.DisplayStats();
-        ~struct Stats
-        myController.detectHit();
-        draw Health();
-        draw Tower()
-        Tower Collision
-        wraparound - mod
-    To Do:
-
-*/
-
 //Stats Struct - mayank
 // Purpose - store the statistics for the games
 struct Statistics
