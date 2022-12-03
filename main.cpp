@@ -49,6 +49,7 @@ MAYANK:
 */
 
 //Stats Struct - mayank
+// Purpose - store the statistics for the games
 struct Statistics
 {
     int tank1_shots_fired = 0;
@@ -75,9 +76,17 @@ class Crown{
 };
 
 //Projectile Class Definition - Mayank
+//Purpose - Manage projectiles across the screen
+//The object takes no parameters. The constructor initializes position and velocity values to 0, and acceleration to 0.2.
+//Fire method records starting position and velocity of projectile based on the input.
+//calcShot method calculates the next position of the projectile in the next frame.
+//Draw Method draws the projectile on the screen.
+//px - X position of the projectile. py - Y position of the projectile
+//vx - X velocity of projectile. vy - Y velocity of projectile.
+//ay - Y acceleration of projectile.
 class Projectile{
     public:
-        Projectile();
+        Projectile(); // Constructor
         void Fire(float, float, float, float);
         void calcShot();
         void Draw();
@@ -90,7 +99,8 @@ class Projectile{
         float ay; // Y acceleration
 };
 
-// Function Prototypes
+// Function Prototypes - Mayank
+// Purpose - to detect whether a point is within a rectangle
 bool touchInBox(int, int, int, int, int, int);
 
 
@@ -187,20 +197,24 @@ class GameController{
 };
 
 //Menu Class Definition - Mayank
+//Purpose - to manage the elements in a menu
+//Menu Constructor - default constructor
+//Draw Method - draws the menu page along with buttons
+//Action - checks for button click and navigates to appropriate page
+//Buttons - 4 buttons for each page made from Button class
 class Menu
 {
     public:
-        Menu();
-        void Draw();
-        int Action();
+        Menu(); // Constructor
+        void Draw(); // Draw
+        int Action(); // Performs action based on click
 
     private:
+        //Buttons
         Button playButton = Button(125, 60, 60, 25, "Play");
         Button howTo = Button(115, 110, 90, 25, "How To");
         Button credits = Button(110, 160, 100, 25, "Credits");
         Button stats = Button(90, 210, 140, 25, "Statistics");
-
-        int ButtonCount; // Stores the number of buttons
 };
 
 
@@ -234,9 +248,10 @@ int main()
         //Go to apropriate window - Mayank
         switch (menuState)
         {
+            // Main Menu Page
             case 0:
-                Mainmenu.Draw();
-                menuState = Mainmenu.Action();
+                Mainmenu.Draw(); // draw main menu
+                menuState = Mainmenu.Action(); // returns the new page
                 break;
 
             case 1:
@@ -275,7 +290,9 @@ int main()
                     }
                 }
                 break;
+            //Instruction Page
             case 2:
+                //Write instructions
                 LCD.WriteLine("Here are the instructions:");
                 LCD.WriteLine("There are 2 players, each with 100 hp");
                 LCD.WriteLine("Move the tank using the");
@@ -285,14 +302,16 @@ int main()
                 LCD.WriteLine("and release");
                 LCD.WriteLine("First to lose all hp loses");
                 
+                // Return Button back to main menu
                 if(Return.Return())
                 {
                     menuState = 0;
                 }
                 
                 break;
-
+            //Credits Page
             case 3:
+            //Write Credits
                 LCD.WriteLine("Game made by Mayank");
                 LCD.WriteLine("Karnati and Jake Browning");
                 LCD.WriteLine("Tower icon is a courtesy");
@@ -300,6 +319,7 @@ int main()
                 LCD.WriteLine("Drawline algorithm sourced from:");
                 LCD.WriteLine("https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm.");
 
+                // Return Button back to main menu
                 if(Return.Return())
                 {
                     menuState = 0;
@@ -307,19 +327,23 @@ int main()
                 
                 break;
 
+            //Stats Page
             case 4:
                 myController.DisplayStats();
                 
+                // Return Button back to main menu
                 if(Return.Return())
                 {
                     menuState = 0;
                 }
                 break;
 
+            //Winner Page
             case 5:
                 LCD.Clear();
-                myController.displayWinner(winner);
+                myController.displayWinner(winner); //Displays Winner based on who won
 
+                // Return Button back to main menu
                 if(Return.Return())
                 {
                     menuState = 0;
@@ -457,17 +481,20 @@ void Tank::Move(float dx, float dy){
 }
 
 // Draw Health - Mayank
+// a - which tank's health must be drawn
 void Tank::drawHealth(int a)
 {
-    if (a == 1)
+    if (a == 1) // Red tank
     {   
+        // Draws red tank's health
         LCD.SetFontColor(RED);
         LCD.WriteAt("Red:", 0, 0);
         LCD.FillRectangle(50, 0, health / 2, 15);
         LCD.SetFontColor(WHITE);
     }
-    else if (a == 2)
+    else if (a == 2) // Blue tank
     {   
+        // Draws Blue Tank's health
         LCD.SetFontColor(BLUE);
         LCD.WriteAt("Blue:", 160, 0);
         LCD.FillRectangle(220, 0, health / 2, 15);
@@ -707,6 +734,7 @@ void GameController::calcShot(){
 }
 
 //Detect Hit Function - Mayank
+// Purpose - detect all possible collisions in the game
 bool GameController::detectHit()
 {
     // If the first player shoots
@@ -732,6 +760,7 @@ bool GameController::detectHit()
             Fired = 0; //Update fired variable
             return true; // returns true if hit
         }
+        // If bullet 1 within tower's rectangle
         else if (touchInBox((((int)bullet1.px))%320, bullet1.py, myTerrain.towerX+10, myTerrain.towerY, 80, 90))
         {   
             Fired = 0; //Update fired variable
@@ -770,13 +799,13 @@ bool GameController::detectHit()
             Fired = 0; //Update fired variable
             return true; // returns true if hit
         }
-        // If bullet 1 within tower's rectangle
+        // If bullet 2 within tower's rectangle
         else if (touchInBox((((int)bullet2.px))%320, bullet2.py, myTerrain.towerX, myTerrain.towerY, 80, 90))
         {   
             Fired = 0; //Update fired variable
             return false; // returns false for miss
         }
-        // if bullet hits terrain or upper screen
+        // if bullet 2 hits terrain or upper screen
         else if (bullet2.py >= myTerrain.height) {
             Fired = 0; //Update fired variable
             return false; // returns false for miss
@@ -791,6 +820,9 @@ bool GameController::detectHit()
 }
 
 //Move Function - Mayank
+// Purpose - Moves tank if the right or left button is pressed
+// mx - x position of mouse click
+// my - y position of mouse click
 void GameController::Move(int mx, int my)
 {
     if (Turn == 1) // if it's red tank's turn
@@ -834,6 +866,7 @@ void GameController::Move(int mx, int my)
 }
 
 // Display Stats Method - Mayank
+// Purpose - draws statistics page and stats
 void GameController::DisplayStats()
 {
     LCD.SetFontColor(BLACK);
@@ -870,6 +903,8 @@ void GameController::DisplayStats()
 }
 
 // Winner Screen Method - Mayank
+// Purpose - draws winner page depending on winner
+// a (parameter) - which tank won
 void GameController::displayWinner(int a)
 {
     if (a == 1) //If tank 1 wins
@@ -894,6 +929,10 @@ void GameController::displayWinner(int a)
 //Button Methods ------------------------
 
 //Button Constructor - Mayank
+//initializes a button
+// ix - x position of button. iy - y position of button
+// iw - width of button. ih - height of button
+// itext - the text of the button
 Button::Button(int ix, int iy, int iw, int ih, char itext[10])
 {
     //Copy variables in
@@ -905,6 +944,7 @@ Button::Button(int ix, int iy, int iw, int ih, char itext[10])
 }
 
 //Draw Button - Mayank
+// Purpose - draws button on screen
 void Button::Draw()
 {
     LCD.SetFontColor(BLACK);
@@ -925,8 +965,10 @@ int Button::Return()
     LCD.DrawRectangle(x, y, w, h);
     LCD.WriteAt(text, x+w/10, y+h/10);
 
+    // track location of mouse
     if (LCD.Touch(&touch_x, &touch_y))
     {
+        // checks if mouse is within return button
         if (touchInBox(touch_x, touch_y, x, y, w, h))
         {
             return 1;
@@ -940,23 +982,26 @@ int Button::Return()
 
 Menu::Menu() //constructor - Both?
 {
-    ButtonCount = 0;
+    
 }
 
 //Menu Draw - Mayank
+//Purpose - draws the entire menu
 void Menu::Draw()
 {
     //Set font color
     LCD.SetFontColor(BLACK);
     LCD.WriteAt("Tanks 2.0", 100, 20);
 
-    credits.Draw();
-    playButton.Draw();
-    howTo.Draw();
-    stats.Draw();
+    credits.Draw(); // draw credits button
+    playButton.Draw(); // draw play button
+    howTo.Draw(); // draw how to button
+    stats.Draw(); // draw statistics page
 }
 
 //Menu Action - Mayank
+//Purpose - checks if any menu button was clicked
+//returns int 1-4 depending on which button was cliecked
 int Menu::Action()
 {
     int x, y;
@@ -967,19 +1012,22 @@ int Menu::Action()
     //Wait for touchscreen release
     while(LCD.Touch(&x, &y));
 
-    //While (!lcd.touch();) - Button release code
+    // if play button was clicked
     if (touchInBox(x, y, playButton.x, playButton.y, playButton.w, playButton.h))
     {
         return 1;
     }
+    // if how to button was clicked
     if (touchInBox(x, y, howTo.x, howTo.y, howTo.w, howTo.h))
     {
         return 2;
     }
+    // if credits button was clicked
     if (touchInBox(x, y, credits.x, credits.y, credits.w, credits.h))
     {
         return 3;
     }
+    // if stats button was clicked
     if (touchInBox(x, y, stats.x, stats.y, stats.w, stats.h))
     {
         return 4;
@@ -988,11 +1036,20 @@ int Menu::Action()
 }
 
 
-// Generic Functions - Mayank
+// Generic Functions
+
+// touch in box  - Mayank
+// Purpose - check whether a point is inside of a rectangle
+// x - x position of point. y - y position of point
+// box_x - x position of rectangle. box_y - y position of rectangle.
+// box_w - width of rectangle. box_h - height of box
+// returns true if point within rectangle, false otherwise
 bool touchInBox(int x, int y, int box_x, int box_y, int box_w, int box_h)
 {
+    //is x within the box's x value endpoints
     if (x > box_x && x < (box_x + box_w))
     {
+        //is y within the box's y value endpoints
         if (y > box_y && y < (box_y + box_h))
         {
             return true;
@@ -1005,6 +1062,7 @@ bool touchInBox(int x, int y, int box_x, int box_y, int box_w, int box_h)
 // Projectile Methods ------------------------------------
 
 // Projectile Constructor - Mayank
+// Purpose - initialize projectile values to 0 except for acceleration(constant)
 Projectile::Projectile()
 {
     px = 0;
@@ -1015,8 +1073,13 @@ Projectile::Projectile()
 }
 
 // Projectile Fire - Mayank
+// Purpose - start the projectile firing process
+// sets the staring x, y position and x, y velocities
+// px0 - starting x position, py0 - starting y position
+// vx0 - x velocity, vy0 - y velocity
 void Projectile::Fire(float px0, float py0, float vx0, float vy0)
 {   
+    // Copies values in
     px = px0;
     py = py0;
     vx = vx0;
@@ -1024,14 +1087,16 @@ void Projectile::Fire(float px0, float py0, float vx0, float vy0)
 }
 
 // Projectile Calc Shot - Mayank
+// Purpose - calculates the position and velocities for next frame
 void Projectile::calcShot()
 {
-    px += vx;
-    py += vy;
-    vy += ay;
+    px += vx;// moves position to the right
+    py += vy;// moved position based on y velocity
+    vy += ay;// increases velocity (falling down because y is positive downwards)
 }
 
 // Projectile Draw - Mayank
+// Purpose - Draws projectile
 void Projectile::Draw()
 {
     LCD.SetFontColor(BLACK);
