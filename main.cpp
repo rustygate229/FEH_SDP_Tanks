@@ -1,4 +1,12 @@
 //Mayank Karnati and Jake Browning
+// SDP Project: Tanks 2.0
+// Ben Grier 12:40
+
+/*
+References
+Tower Icon from Flaticon: https://www.flaticon.com/free-icon/tower_909428?term=tower&page=1&position=14&page=1&position=14&related_id=909428&origin=tag
+*/
+
 #define _USE_MATH_DEFINES
 #include "FEHLCD.h"
 #include <iostream>
