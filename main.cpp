@@ -27,7 +27,7 @@ struct Statistics
     int tank2_wins = 0; // Number of games won by player 2
 };
 
-//Crown Class - Jake
+// Crown Class - Jake
 // Manages the crown that indicates who won the last round of the game
 // The crown is drawn only after the first round and is drawn on top of the tank that won the previous round for the entire next round
 class Crown{
